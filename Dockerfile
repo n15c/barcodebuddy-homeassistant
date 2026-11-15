@@ -1,4 +1,5 @@
-FROM f0rc3/barcodebuddy:latest
+# Basis-Image ist auf Version und Digest festgelegt; Updates bewusst hier und in build.yaml anheben.
+FROM f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
 
 # Build arguments
 ARG BUILD_ARCH

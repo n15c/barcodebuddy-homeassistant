@@ -22,14 +22,16 @@ if [ -f "$OPTIONS" ]; then
   DEVICE="$(opt SCANNER_DEVICE)"
   DEBUG="$(opt SCANNER_DEBUG)"
 
-  # Diagnose: 30 Sekunden lang alle Eingabegeraete mitlesen (ohne Grab) und Tastendruecke
+  # Diagnose: 30 Sekunden lang die Eingabegeraete mitlesen (ohne Grab) und Tastendruecke
   # mit dem jeweiligen Geraet ins Log schreiben. Waehrenddessen einen Barcode scannen.
+  # Lesbar ist nur das unter SCANNER_DEVICE gewaehlte Geraet (Home Assistant gibt dem
+  # Add-on nur darauf Zugriff); andere Geraete werden als "kein Zugriff" gemeldet.
   if [ "$DEBUG" = "true" ]; then
     if command -v evtest >/dev/null 2>&1; then
       echo "[ha-entrypoint] SCANNER_DEBUG: 30 Sekunden lang Tastendruecke aller Geraete anzeigen - jetzt einen Barcode scannen!"
       for d in ${INPUT_DIR:-/dev/input}/event*; do
         [ -e "$d" ] || continue
-        ( timeout 30 evtest "$d" 2>&1 | awk -v p="[ha-entrypoint][$(basename "$d")] " '/EV_KEY.*value 1/ { print p $0; fflush() }' ) &
+        ( timeout 30 evtest "$d" 2>&1 | awk -v p="[ha-entrypoint][$(basename "$d")] " '/EV_KEY.*value 1/ { print p $0; fflush() } /^evtest: / { print p "kein Zugriff (" $0 ")"; fflush() }' ) &
       done
       wait
       echo "[ha-entrypoint] SCANNER_DEBUG beendet. Im Log oben steht, welches eventX die Zeichen sendet."
@@ -62,11 +64,12 @@ if [ -f "$OPTIONS" ]; then
 
       # grabInput.sh wird vom Supervisor ohne Argument gestartet und bricht ab, wenn
       # mehrere Geraete in /dev/input/ liegen. Shim: gewaehltes Geraet als Argument uebergeben.
-      GRAB="$(find / -xdev -name grabInput.sh -not -name 'grabInput.real.sh' 2>/dev/null | head -n1)"
-      if [ -z "$GRAB" ]; then
+      # Fester Pfad, den der BarcodeBuddy-Supervisor startet (kein Durchsuchen des Dateisystems)
+      GRAB=/app/bbuddy/example/grabInput.sh
+      REAL=/app/bbuddy/example/grabInput.real.sh
+      if [ ! -f "$GRAB" ] && [ ! -f "$REAL" ]; then
         echo "[ha-entrypoint] grabInput.sh nicht gefunden - Geraet kann nicht uebergeben werden." >&2
       else
-        REAL="$(dirname "$GRAB")/grabInput.real.sh"
         [ -f "$REAL" ] || mv "$GRAB" "$REAL"
         cp /usr/local/share/ha-grabInput.sh "$GRAB"
         chmod +x "$GRAB" "$REAL"
@@ -74,6 +77,24 @@ if [ -f "$OPTIONS" ]; then
       fi
     fi
   fi
+fi
+
+# Einmalige Datenuebernahme: Frühere Versionen haben die Home-Assistant-Konfiguration
+# beschreibbar unter /config eingebunden, BarcodeBuddy hat seine Daten daher in
+# <HA-Konfiguration>/data abgelegt. Jetzt liegt /config im eigenen Add-on-Ordner
+# (addon_config); die alten Daten werden von dort (nur lesend) kopiert, falls noch keine
+# neuen vorhanden sind. Die alten Dateien bleiben unveraendert liegen.
+OLD_DATA=/homeassistant/data
+NEW_DATA=/config/data
+if [ -f "$OLD_DATA/barcodebuddy.db" ] && [ ! -e "$NEW_DATA/barcodebuddy.db" ]; then
+  echo "[ha-entrypoint] Uebernehme bestehende BarcodeBuddy-Daten aus der Home-Assistant-Konfiguration ($OLD_DATA)"
+  mkdir -p "$NEW_DATA"
+  for f in barcodebuddy.db barcodebuddy.db-wal barcodebuddy.db-shm users.db users.db-wal users.db-shm config.php; do
+    if [ -f "$OLD_DATA/$f" ]; then
+      cp "$OLD_DATA/$f" "$NEW_DATA/$f" && echo "[ha-entrypoint]   $f uebernommen"
+    fi
+  done
+  echo "[ha-entrypoint] Die alten Dateien in <HA-Konfiguration>/data und /keys koennen nach einer Pruefung geloescht werden."
 fi
 
 exec /app/supervisor "$@"

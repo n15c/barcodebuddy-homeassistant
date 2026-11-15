@@ -40,8 +40,24 @@ In der Add-on-Konfiguration:
 2. Unter `SCANNER_DEVICE` die gewünschte Tastatur bzw. den Scanner aus der Liste wählen
 3. Add-on neu starten
 
-Das gewählte Eingabegerät steht im Container zur Verfügung und wird an BarcodeBuddy übergeben.
-Hinweis: Dafür benötigt das Add-on `full_access`, da Home Assistant Geräte nicht dynamisch pro Auswahl mappen kann.
+Home Assistant gibt dem Add-on nur auf das gewählte Eingabegerät Zugriff; es wird an BarcodeBuddy übergeben.
+Erweiterter Hardware-Zugriff (`full_access`) ist dafür nicht nötig.
+
+### Datenablage und Update von Version 0.4.x
+
+Ab Version 0.5.0 liegen die BarcodeBuddy-Daten im eigenen Add-on-Ordner
+(`/addon_configs/<id>_bbuddy-grocy/data`) statt in der Home-Assistant-Konfiguration.
+Beim ersten Start nach dem Update werden `barcodebuddy.db`, `users.db` und `config.php`
+automatisch aus `<HA-Konfiguration>/data` übernommen. Danach können die alten Ordner
+`data` und `keys` in der Home-Assistant-Konfiguration gelöscht werden (vorher prüfen, dass
+sie nicht von etwas anderem genutzt werden).
+
+### Sicherheit
+
+- Die Home-Assistant-Konfiguration ist nur noch lesend eingebunden (für die Datenübernahme).
+- Ingress ist nur für Administratoren sichtbar und nur vom Home-Assistant-Supervisor erreichbar.
+- Der direkte Port `8621` ist unverschlüsselt (HTTP). Wird er nicht gebraucht, unter *Netzwerk* leeren.
+  `disable_auth` nur aktivieren, wenn niemand Unbefugtes das Netzwerk erreicht.
 
 ## Contributors
 <a href="https://github.com/forceu/barcodebuddy-homeassistant/graphs/contributors">

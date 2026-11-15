@@ -1,6 +1,6 @@
 ---
 name: Barcode Buddy for Grocy
-version: 0.4.3
+version: 0.5.0
 slug: bbuddy-grocy
 description: Barcode system for Grocy
 url: https://github.com/Forceu/barcodebuddy
@@ -9,6 +9,7 @@ ingress_port: 8099
 ingress_stream: true
 panel_icon: mdi:barcode-scan
 panel_title: Barcode Buddy
+panel_admin: true
 startup: system
 arch:
 - aarch64
@@ -17,11 +18,12 @@ arch:
 - i386
 boot: auto
 init: false
-full_access: true
 udev: true
 map:
-- config:rw
-- ssl
+# Eigener Konfigurationsordner des Add-ons (/config im Container)
+- addon_config:rw
+# Nur lesend, fuer die einmalige Uebernahme der Daten aus frueheren Versionen
+- homeassistant_config:ro
 ports:
   80/tcp: 8621
 ports_description:

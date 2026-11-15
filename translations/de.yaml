@@ -4,7 +4,8 @@ configuration:
     name: Anmeldung deaktivieren
     description: >-
       Schaltet die BarcodeBuddy-Anmeldung auf dem direkten Port (8621) ab.
-      Über Home Assistant (Ingress) ist nie eine separate Anmeldung nötig.
+      Achtung: Dann hat jeder im Netzwerk ohne Anmeldung vollen Zugriff.
+      Über Home Assistant (Ingress) ist ohnehin keine separate Anmeldung nötig.
   debug:
     name: Debug-Modus
     description: Zeigt PHP-Fehler und zusätzliche Debug-Ausgaben an.
@@ -30,8 +31,9 @@ configuration:
   SCANNER_DEBUG:
     name: Scanner-Diagnose
     description: >-
-      Protokolliert beim Start 30 Sekunden lang die Tastendrücke aller
-      Eingabegeräte. Währenddessen einen Barcode scannen, um herauszufinden,
-      welches Gerät der Scanner ist.
+      Protokolliert beim Start 30 Sekunden lang die Tastendrücke des gewählten
+      Scanner-Geräts. Währenddessen einen Barcode scannen, um zu prüfen, ob das
+      richtige Gerät gewählt ist. Achtung: Bei einer Tastatur landen auch
+      eingegebene Texte im Log, daher nur kurz zur Fehlersuche aktivieren.
 network:
   80/tcp: Weboberfläche (direkter Zugriff, z.B. für die API und Scanner-Apps)

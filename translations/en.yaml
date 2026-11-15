@@ -4,6 +4,7 @@ configuration:
     name: Disable login
     description: >-
       Disables the BarcodeBuddy login on the direct port (8621).
+      Warning: anyone on your network then has full access without logging in.
       Access via Home Assistant (Ingress) never needs a separate login.
   debug:
     name: Debug mode
@@ -30,7 +31,9 @@ configuration:
   SCANNER_DEBUG:
     name: Scanner diagnostics
     description: >-
-      At startup, logs key presses from all input devices for 30 seconds.
-      Scan a barcode during this time to find out which device is the scanner.
+      At startup, logs key presses of the selected scanner device for 30
+      seconds. Scan a barcode during this time to check that the right device
+      is selected. Warning: for a keyboard, typed text ends up in the log as
+      well, so only enable it briefly for troubleshooting.
 network:
   80/tcp: Web interface (direct access, e.g. for the API and scanner apps)
