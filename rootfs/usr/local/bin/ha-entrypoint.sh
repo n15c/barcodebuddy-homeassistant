@@ -21,7 +21,7 @@ if [ -f "$OPTIONS" ]; then
       echo "[ha-entrypoint] SCANNER_DEBUG: 30 Sekunden lang Tastendruecke aller Geraete anzeigen - jetzt einen Barcode scannen!"
       for d in ${INPUT_DIR:-/dev/input}/event*; do
         [ -e "$d" ] || continue
-        ( timeout 30 evtest "$d" 2>&1 | grep --line-buffered -E 'EV_KEY.*value 1' | sed "s#^#[ha-entrypoint][$(basename "$d")] #" ) &
+        ( timeout 30 evtest "$d" 2>&1 | awk -v p="[ha-entrypoint][$(basename "$d")] " '/EV_KEY.*value 1/ { print p $0; fflush() }' ) &
       done
       wait
       echo "[ha-entrypoint] SCANNER_DEBUG beendet. Im Log oben steht, welches eventX die Zeichen sendet."

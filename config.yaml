@@ -1,6 +1,6 @@
 ---
 name: Barcode Buddy for Grocy
-version: 0.3
+version: 0.3.1
 slug: bbuddy-grocy
 description: Barcode system for Grocy
 url: https://github.com/Forceu/barcodebuddy
@@ -40,4 +40,4 @@ schema:
   curl_allow_insecure_ssl_host: bool
   ATTACH_BARCODESCANNER: bool
   SCANNER_DEVICE: "device(subsystem=input)?"
-  SCANNER_DEBUG: bool
+  SCANNER_DEBUG: "bool?"
