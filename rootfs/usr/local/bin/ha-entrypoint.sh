@@ -19,9 +19,31 @@ if [ -f "$OPTIONS" ]; then
     elif [ ! -e "$DEVICE" ]; then
       echo "[ha-entrypoint] Geraet $DEVICE existiert im Container nicht - Scanner wird nicht angebunden." >&2
     else
+      # Symlinks (z.B. /dev/input/by-id/...) zu /dev/input/eventX aufloesen
+      DEVICE="$(readlink -f "$DEVICE")"
       echo "[ha-entrypoint] Scanner/Tastatur: $DEVICE"
       export ATTACH_BARCODESCANNER=true
       export SCANNER_DEVICE="$DEVICE"
+
+      # grabInput.sh wird vom Supervisor ohne Argument gestartet und bricht ab, wenn
+      # mehrere Geraete in /dev/input/ liegen. Shim: gewaehltes Geraet als Argument uebergeben.
+      GRAB="$(find / -xdev -name grabInput.sh -not -name 'grabInput.real.sh' 2>/dev/null | head -n1)"
+      if [ -z "$GRAB" ]; then
+        echo "[ha-entrypoint] grabInput.sh nicht gefunden - Geraet kann nicht uebergeben werden." >&2
+      else
+        REAL="$(dirname "$GRAB")/grabInput.real.sh"
+        [ -f "$REAL" ] || mv "$GRAB" "$REAL"
+        cat > "$GRAB" <<'SHIM'
+#!/bin/sh
+REAL="$(dirname "$0")/grabInput.real.sh"
+if [ -z "$1" ] && [ -n "$SCANNER_DEVICE" ]; then
+  exec "$REAL" "$SCANNER_DEVICE"
+fi
+exec "$REAL" "$@"
+SHIM
+        chmod +x "$GRAB" "$REAL"
+        echo "[ha-entrypoint] grabInput.sh in $(dirname "$GRAB") umgeleitet auf $DEVICE"
+      fi
     fi
   fi
 fi
