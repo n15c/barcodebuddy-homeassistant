@@ -1,10 +1,5 @@
 ---
 configuration:
-  require_api_key:
-    name: Require API key
-    description: >-
-      Currently has no effect: BarcodeBuddy always requires an API key
-      by default.
   disable_auth:
     name: Disable login
     description: >-
