@@ -1,11 +1,14 @@
 ---
 name: Barcode Buddy for Grocy
-version: 0.3.2
+version: 0.4.2
 slug: bbuddy-grocy
 description: Barcode system for Grocy
 url: https://github.com/Forceu/barcodebuddy
-webui: http://[HOST]:[PORT:80]
+ingress: true
+ingress_port: 8099
+ingress_stream: true
 panel_icon: mdi:barcode-scan
+panel_title: Barcode Buddy
 startup: system
 arch:
 - aarch64
@@ -22,9 +25,8 @@ map:
 ports:
   80/tcp: 8621
 ports_description:
-  80/tcp: Web interface
+  80/tcp: Web interface (direct access, e.g. for the API and scanner apps)
 options:
-  require_api_key: false
   disable_auth: false
   debug: false
   curl_allow_insecure_ssl_ca: false
@@ -33,7 +35,6 @@ options:
   SCANNER_DEVICE: ""
   SCANNER_DEBUG: false
 schema:
-  require_api_key: bool
   disable_auth: bool
   debug: bool
   curl_allow_insecure_ssl_ca: bool

@@ -1,0 +1,37 @@
+---
+configuration:
+  disable_auth:
+    name: Anmeldung deaktivieren
+    description: >-
+      Schaltet die BarcodeBuddy-Anmeldung auf dem direkten Port (8621) ab.
+      Über Home Assistant (Ingress) ist nie eine separate Anmeldung nötig.
+  debug:
+    name: Debug-Modus
+    description: Zeigt PHP-Fehler und zusätzliche Debug-Ausgaben an.
+  curl_allow_insecure_ssl_ca:
+    name: Nicht vertrauenswürdige SSL-Zertifikate erlauben
+    description: >-
+      Grocy-Zertifikate akzeptieren, die nicht von einer vertrauenswürdigen
+      Zertifizierungsstelle signiert sind (z.B. selbstsigniert).
+  curl_allow_insecure_ssl_host:
+    name: Abweichende SSL-Hostnamen erlauben
+    description: >-
+      Grocy-Zertifikate akzeptieren, deren Hostname nicht zur URL passt.
+  ATTACH_BARCODESCANNER:
+    name: Barcodescanner anbinden
+    description: >-
+      Liest Barcodes direkt von einem USB-Scanner oder einer Tastatur, die am
+      Home-Assistant-Host angeschlossen ist.
+  SCANNER_DEVICE:
+    name: Scanner-Gerät
+    description: >-
+      Das zu verwendende Eingabegerät (Scanner oder Tastatur). Wird nur
+      verwendet, wenn „Barcodescanner anbinden“ aktiv ist.
+  SCANNER_DEBUG:
+    name: Scanner-Diagnose
+    description: >-
+      Protokolliert beim Start 30 Sekunden lang die Tastendrücke aller
+      Eingabegeräte. Währenddessen einen Barcode scannen, um herauszufinden,
+      welches Gerät der Scanner ist.
+network:
+  80/tcp: Weboberfläche (direkter Zugriff, z.B. für die API und Scanner-Apps)

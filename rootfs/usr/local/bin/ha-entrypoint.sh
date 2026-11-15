@@ -10,6 +10,14 @@ opt() {
 }
 
 if [ -f "$OPTIONS" ]; then
+  # Allgemeine Add-on-Optionen an BarcodeBuddy weiterreichen. BBUDDY_*-Variablen
+  # schreibt der Supervisor als fastcgi_param in die Konfiguration des direkten Ports.
+  # (Beim Ingress-Zugang ist die Anmeldung immer aus, das uebernimmt Home Assistant.)
+  [ "$(opt disable_auth)" = "true" ] && export BBUDDY_DISABLE_AUTHENTICATION=true
+  [ "$(opt debug)" = "true" ] && export BBUDDY_IS_DEBUG=true
+  [ "$(opt curl_allow_insecure_ssl_ca)" = "true" ] && export IGNORE_SSL_CA=true
+  [ "$(opt curl_allow_insecure_ssl_host)" = "true" ] && export IGNORE_SSL_HOST=true
+
   ATTACH="$(opt ATTACH_BARCODESCANNER)"
   DEVICE="$(opt SCANNER_DEVICE)"
   DEBUG="$(opt SCANNER_DEBUG)"

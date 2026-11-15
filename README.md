@@ -22,6 +22,16 @@ This is the docker repo optimized for Home Assistant of [BarcodeBuddy](https://g
 1. Click context menu in addon section
 2. Add custom repo url and point to this repo https://github.com/n15c/barcodebuddy-homeassistant
 
+### Home Assistant Ingress
+
+Das Add-on unterstützt Ingress: Die Oberfläche öffnet sich direkt in Home Assistant
+(Seitenleiste „Barcode Buddy“ bzw. „Benutzeroberfläche öffnen“), ohne eigenen Port und ohne extra Login –
+die Anmeldung übernimmt Home Assistant.
+
+Der direkte Port (Standard `8621`) bleibt bestehen, z.B. für die API und Scanner-Apps.
+Wer ihn nicht braucht, kann ihn in der Add-on-Konfiguration unter *Netzwerk* leeren.
+Für den direkten Port gelten weiterhin die BarcodeBuddy-Anmeldung und die Option `disable_auth`.
+
 ### Barcodescanner / Tastatur anbinden
 
 In der Add-on-Konfiguration:
