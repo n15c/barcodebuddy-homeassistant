@@ -1,0 +1,41 @@
+---
+configuration:
+  require_api_key:
+    name: Require API key
+    description: >-
+      Currently has no effect: BarcodeBuddy always requires an API key
+      by default.
+  disable_auth:
+    name: Disable login
+    description: >-
+      Disables the BarcodeBuddy login on the direct port (8621).
+      Access via Home Assistant (Ingress) never needs a separate login.
+  debug:
+    name: Debug mode
+    description: Shows PHP errors and additional debug output.
+  curl_allow_insecure_ssl_ca:
+    name: Allow untrusted SSL certificates
+    description: >-
+      Accept Grocy certificates that are not signed by a trusted
+      certificate authority (e.g. self-signed).
+  curl_allow_insecure_ssl_host:
+    name: Allow mismatching SSL host names
+    description: >-
+      Accept Grocy certificates whose host name does not match the URL.
+  ATTACH_BARCODESCANNER:
+    name: Attach barcode scanner
+    description: >-
+      Reads barcodes directly from a USB scanner or keyboard connected to
+      the Home Assistant host.
+  SCANNER_DEVICE:
+    name: Scanner device
+    description: >-
+      The input device (scanner or keyboard) to use. Only used when
+      "Attach barcode scanner" is enabled.
+  SCANNER_DEBUG:
+    name: Scanner diagnostics
+    description: >-
+      At startup, logs key presses from all input devices for 30 seconds.
+      Scan a barcode during this time to find out which device is the scanner.
+network:
+  80/tcp: Web interface (direct access, e.g. for the API and scanner apps)
