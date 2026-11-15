@@ -14,6 +14,8 @@ arch:
 - i386
 boot: auto
 init: false
+full_access: true
+udev: true
 map:
 - config:rw
 - ssl
@@ -27,9 +29,13 @@ options:
   debug: false
   curl_allow_insecure_ssl_ca: false
   curl_allow_insecure_ssl_host: false
+  ATTACH_BARCODESCANNER: false
+  SCANNER_DEVICE: ""
 schema:
   require_api_key: bool
   disable_auth: bool
   debug: bool
   curl_allow_insecure_ssl_ca: bool
   curl_allow_insecure_ssl_host: bool
+  ATTACH_BARCODESCANNER: bool
+  SCANNER_DEVICE: "device(subsystem=input)?"

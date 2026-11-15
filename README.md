@@ -20,7 +20,18 @@ This is the docker repo optimized for Home Assistant of [BarcodeBuddy](https://g
 
 ![](images/add-repo-url.png?raw=true)
 1. Click context menu in addon section
-2. Add custom repo url and point to this repo https://github.com/Forceu/barcodebuddy-homeassistant
+2. Add custom repo url and point to this repo https://github.com/n15c/barcodebuddy-homeassistant
+
+### Barcodescanner / Tastatur anbinden
+
+In der Add-on-Konfiguration:
+
+1. `ATTACH_BARCODESCANNER` aktivieren
+2. Unter `SCANNER_DEVICE` die gewünschte Tastatur bzw. den Scanner aus der Liste wählen
+3. Add-on neu starten
+
+Das gewählte Eingabegerät steht im Container zur Verfügung und wird an BarcodeBuddy übergeben.
+Hinweis: Dafür benötigt das Add-on `full_access`, da Home Assistant Geräte nicht dynamisch pro Auswahl mappen kann.
 
 ## Contributors
 <a href="https://github.com/forceu/barcodebuddy-homeassistant/graphs/contributors">
