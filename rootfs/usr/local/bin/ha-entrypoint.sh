@@ -60,16 +60,9 @@ if [ -f "$OPTIONS" ]; then
       else
         REAL="$(dirname "$GRAB")/grabInput.real.sh"
         [ -f "$REAL" ] || mv "$GRAB" "$REAL"
-        cat > "$GRAB" <<'SHIM'
-#!/bin/sh
-REAL="$(dirname "$0")/grabInput.real.sh"
-if [ -z "$1" ] && [ -n "$SCANNER_DEVICE" ]; then
-  exec "$REAL" "$SCANNER_DEVICE"
-fi
-exec "$REAL" "$@"
-SHIM
+        cp /usr/local/share/ha-grabInput.sh "$GRAB"
         chmod +x "$GRAB" "$REAL"
-        echo "[ha-entrypoint] grabInput.sh in $(dirname "$GRAB") umgeleitet auf $DEVICE"
+        echo "[ha-entrypoint] grabInput.sh in $(dirname "$GRAB") durch angepasste Version ersetzt (Geraet: $DEVICE)"
       fi
     fi
   fi

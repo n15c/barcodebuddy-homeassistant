@@ -16,6 +16,6 @@ LABEL \
 
 # Home-Assistant-Optionen -> Umgebungsvariablen (ATTACH_BARCODESCANNER, SCANNER_DEVICE)
 COPY rootfs /
-RUN chmod +x /usr/local/bin/ha-entrypoint.sh
+RUN chmod +x /usr/local/bin/ha-entrypoint.sh /usr/local/share/ha-grabInput.sh
 ENTRYPOINT ["/usr/local/bin/ha-entrypoint.sh"]
 CMD []
