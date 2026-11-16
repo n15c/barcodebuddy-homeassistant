@@ -1,0 +1,81 @@
+name: Neue Barcode-Buddy-Version pruefen
+
+# Prueft woechentlich, ob es eine neue Barcode-Buddy-Version gibt, und bereitet den Merge in
+# barcodebuddy/ (git subtree) als Pull Request vor. Bei Konflikten mit den eigenen Aenderungen
+# wird stattdessen ein Issue mit den betroffenen Dateien angelegt.
+#
+# Voraussetzung: Einstellungen -> Actions -> General -> "Allow GitHub Actions to create and approve
+# pull requests". Hinweis: Von GitHub Actions erstellte Pull Requests starten Build und Tests nicht
+# selbst; diese ueber "Run workflow" auf dem Branch starten oder einen Commit pushen.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Versionen vergleichen
+        id: version
+        run: |
+          current="$(grep -oP 'BB_VERSION_READABLE\s*=\s*"\K[^"]+' barcodebuddy/incl/configProcessing.inc.php)"
+          latest="$(git ls-remote --tags --refs https://github.com/Forceu/barcodebuddy.git \
+            | sed 's#.*refs/tags/##' | grep -E '^v[0-9]+(\.[0-9]+)+$' | sort -V | tail -n1)"
+          echo "Eingebaut: $current, neueste: $latest"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "v$current" = "$latest" ] || [ -z "$latest" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --heads origin "upstream/$latest" > /dev/null; then
+            echo "Branch upstream/$latest gibt es schon"
+            echo "update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Merge vorbereiten
+        if: steps.version.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.latest }}
+          CURRENT: ${{ steps.version.outputs.current }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "upstream/$TAG"
+          if git subtree pull --prefix=barcodebuddy https://github.com/Forceu/barcodebuddy.git "$TAG" --squash \
+              -m "Barcode Buddy auf $TAG aktualisieren"; then
+            git push origin "upstream/$TAG"
+            gh pr create --base master --head "upstream/$TAG" \
+              --title "Barcode Buddy $TAG übernehmen" \
+              --body "Neue Barcode-Buddy-Version **$TAG** (bisher v$CURRENT), automatisch per \`git subtree pull\` eingemergt.
+
+          - Änderungen: https://github.com/Forceu/barcodebuddy/compare/v$CURRENT...$TAG
+          - Build und Tests starten bei automatisch erstellten Pull Requests nicht von selbst: unter *Actions* die Workflows „Add-on bauen und testen“ und „Tests“ für den Branch \`upstream/$TAG\` per *Run workflow* starten.
+          - Vor dem Merge die Version in \`config.yaml\` erhöhen und \`CHANGELOG.md\` ergänzen."
+          else
+            conflicts="$(git diff --name-only --diff-filter=U | sed 's/^/- /')"
+            git merge --abort || true
+            gh issue create \
+              --title "Barcode Buddy $TAG verfügbar – Merge hat Konflikte" \
+              --body "Die neue Barcode-Buddy-Version **$TAG** (bisher v$CURRENT) lässt sich nicht automatisch übernehmen. Konflikte mit den eigenen Änderungen in:
+
+          $conflicts
+
+          Lokal übernehmen:
+
+          \`\`\`sh
+          git subtree pull --prefix=barcodebuddy https://github.com/Forceu/barcodebuddy.git $TAG --squash
+          \`\`\`"
+          fi

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+- Weboberfläche auf Deutsch (Option „Sprache“ = `de`)
+- Produkt bearbeiten auf der Screen-Seite: Lagerort und Mengeneinheit direkt nach dem Einkauf ändern,
+  inklusive Umrechnung, wenn schon Bestand gebucht ist
+- Fertige Images aus der GitHub Container Registry: Updates werden heruntergeladen statt auf dem Gerät gebaut
+- Kein Zugriff mehr auf die Home-Assistant-Konfiguration; die Datenübernahme aus Versionen vor 0.5.0 entfällt
+- Automatische Prüfung auf neue Barcode-Buddy-Versionen und automatische Tests im Repository
+
 ## 1.1.0
 
 - Neues, modernes Erscheinungsbild der Weboberfläche: dunkle Seitenleiste mit Icons, Karten, Tabellen und

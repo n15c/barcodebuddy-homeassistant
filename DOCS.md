@@ -67,6 +67,16 @@ Hinweis: Die Energie wird pro Packung eingetragen, weil Grocy sie pro Bestandsme
 Wer als Mengeneinheit z.B. Gramm verwendet, sollte den Wert in Grocy anpassen. Die Daten von
 Open Food Facts stehen unter der [ODbL-Lizenz](https://opendatacommons.org/licenses/odbl/1-0/).
 
+## Produkt nachbearbeiten
+
+Nach einem Einkauf zeigt die Ergebniskarte der Screen-Seite **„Produkt bearbeiten“**, ebenso der MHD-Dialog.
+Dort lassen sich Standard-Lagerort und Mengeneinheit des Produkts ändern, ohne Grocy zu öffnen – praktisch
+direkt nach der automatischen Anlage aus Open Food Facts.
+
+- **Lagerort:** wird beim Produkt gespeichert; der gerade gebuchte Einkauf zieht mit um.
+- **Mengeneinheit:** Grocy erlaubt den Wechsel nach dem ersten Einkauf nur mit einer Umrechnung. Der Dialog fragt
+  deshalb „1 Packung = … Stück“ ab und legt die Umrechnung für dieses Produkt an; Grocy rechnet den Bestand um.
+
 ## Screen-Seite für Touchscreens
 
 Die Screen-Seite (in Barcode Buddy oben „Screen“) ist für Tablets und Smartphones neu gestaltet:

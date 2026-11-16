@@ -15,7 +15,8 @@ Home-Assistant-Add-on für [Barcode Buddy](https://github.com/Forceu/barcodebudd
   [Open Food Facts](https://world.openfoodfacts.org)
 - **Einlagern mit MHD-Abfrage** – Lagerort wählen, scannen, aufgedrucktes Datum auf der Bildschirmtastatur eintippen
 - **Touchscreen-Seite** – große Kacheln für alle Modi, Live-Anzeige mit Fortschritt, Mengenkorrektur, Hell-/Dunkelmodus
-- **Moderne Weboberfläche** direkt in Home Assistant (Ingress), ohne extra Login
+- **Produkt nachbearbeiten** – Lagerort und Mengeneinheit direkt auf der Screen-Seite ändern
+- **Moderne, deutsche Weboberfläche** direkt in Home Assistant (Ingress), ohne extra Login
 - **Barcodescanner am Home-Assistant-Host** (USB-Scanner oder Tastatur)
 - Läuft auf aarch64, amd64, armv7 und i386
 
@@ -38,7 +39,8 @@ Oder von Hand: *Einstellungen → Add-ons → Add-on-Store → ⋮ → Repositor
 | `Dockerfile`, `build.yaml` | Image auf `ghcr.io/home-assistant/<arch>-base` (Alpine, s6-overlay, bashio), PHP 8.4 |
 | `config.yaml`, `translations/` | Add-on-Konfiguration und Optionstexte |
 | `DOCS.md`, `CHANGELOG.md` | Anleitung und Änderungen (werden in Home Assistant angezeigt) |
-| `.github/workflows/build.yaml`, `test/` | Baut das Image für alle Architekturen und testet es auf amd64 |
+| `test/` | Tests: Grocy-/Open-Food-Facts-Nachbau, Ende-zu-Ende-, JavaScript- und Browsertests |
+| `.github/workflows/` | Build-Test, Tests, Veröffentlichen der Images, Prüfung auf neue Barcode-Buddy-Versionen |
 
 Im Container laufen die s6-Dienste `nginx`, `php-fpm`, `redis`, `websocket` (Live-Anzeige der Screen-Seite),
 `cron` (Hintergrundjob alle 2 Minuten) und `grabber` (Barcodescanner). Vorher bereitet `init-bbuddy`
@@ -52,6 +54,7 @@ Erweiterungen in `barcodebuddy/`:
 | `incl/haStorage.inc.php`, `ha_storage.php`, `incl/js/haStorage.js` | Einlagern, MHD-Abfrage, Mengenkorrektur |
 | `screen.php` | Touchscreen-Seite |
 | `incl/css/theme.css`, `incl/webui.inc.php` | Modernes Erscheinungsbild und Navigation |
+| `incl/haI18n.inc.php` | Deutsche Oberfläche |
 | `incl/configProcessing.inc.php` | Add-on-Optionen |
 | `example/grabInput.sh` | Scanner-Skript |
 
@@ -59,8 +62,21 @@ Gegenüber dem Original entfernt: Barcode Buddy Federation.
 
 ## Entwicklung
 
-- Pull Requests werden automatisch gebaut und getestet (GitHub Actions).
-- Neue Barcode-Buddy-Version übernehmen:
+- **Tests** lokal ausführen (PHP 8 mit curl, sqlite3, sockets, mbstring sowie Node; Browsertests, wenn
+  Playwright installiert ist):
+
+  ```sh
+  ./test/run.sh
+  ```
+
+  In GitHub Actions laufen sie bei jedem Pull Request, zusammen mit dem Image-Build für alle Architekturen.
+- **Veröffentlichen:** Steigt die Version in `config.yaml` auf `master`, baut `publish.yaml` die Images und
+  legt sie unter `ghcr.io/n15c/<arch>-addon-bbuddy-grocy` ab. Einmalig nach dem ersten Lauf die vier Pakete auf
+  GitHub unter *Packages* auf „Public“ stellen, sonst kann Home Assistant sie nicht laden. Bis die Images einer
+  neuen Version gebaut sind (einige Minuten nach dem Merge), schlägt ein Update in Home Assistant fehl.
+- **Neue Barcode-Buddy-Version:** `upstream.yaml` prüft wöchentlich und bereitet den Merge als Pull Request vor
+  (bei Konflikten ein Issue). Dafür unter *Settings → Actions → General* „Allow GitHub Actions to create and
+  approve pull requests“ einschalten. Von Hand:
 
   ```sh
   git subtree pull --prefix=barcodebuddy https://github.com/Forceu/barcodebuddy.git <tag> --squash
