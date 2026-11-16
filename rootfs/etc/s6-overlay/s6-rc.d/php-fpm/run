@@ -1,0 +1,4 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+bashio::log.info "Starte PHP-FPM"
+exec php-fpm84 -F -y /etc/php84/php-fpm.conf

@@ -1,0 +1,6 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# Live-Server fuer die Screen-Seite (nur lokal auf 127.0.0.1)
+bashio::log.info "Starte Websocket-Server"
+cd /app/bbuddy || exit 1
+exec s6-setuidgid barcodebuddy php /app/bbuddy/wsserver.php

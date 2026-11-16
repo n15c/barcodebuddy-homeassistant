@@ -1,9 +1,8 @@
 ---
-squash: false
+# Offizielle Home-Assistant-Basisimages (s6-overlay, bashio). armv7 und i386 gibt es nur bis Alpine 3.22.
 build_from:
-  arm64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
-  aarch64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
-  amd64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
-  armv7: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
-  i386: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+  aarch64: ghcr.io/home-assistant/aarch64-base:3.24
+  amd64: ghcr.io/home-assistant/amd64-base:3.24
+  armv7: ghcr.io/home-assistant/armv7-base:3.22
+  i386: ghcr.io/home-assistant/i386-base:3.22
 args: {}

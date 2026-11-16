@@ -1,0 +1,16 @@
+<Files .htaccess>
+	Order allow,deny
+	Deny from all
+</Files>
+
+# Prevent viewing of database file.
+<Files data>
+    order allow,deny
+    deny from all
+</Files>
+
+# Prevent viewing of example folder.
+<Files example>
+    order allow,deny
+    deny from all
+</Files>
