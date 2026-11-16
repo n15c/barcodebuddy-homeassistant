@@ -349,7 +349,14 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         window.sendBarcode = sendBarcode;
         window.closeNav = function () {};
 
+        var currentMode = null;
         function setMode(name) {
+            // Wechsel in den Kauf-Modus: Lagerort waehlen lassen, damit das MHD abgefragt wird
+            // (nicht beim ersten Laden der Seite, nur bei einem echten Wechsel)
+            if (name === "Purchase" && currentMode !== null && currentMode !== "Purchase"
+                && typeof window.haStorageEnsureSession === "function")
+                window.haStorageEnsureSession();
+            currentMode = name;
             $("mode").textContent = (t.modes && t.modes[name]) || name;
             var color = BB.modeColors[name] || "green";
             document.documentElement.style.setProperty("--mode", "var(--" + color + ")");
@@ -361,6 +368,8 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         Array.prototype.forEach.call(document.querySelectorAll(".tile[data-barcode]"), function (tile) {
             tile.addEventListener("click", function () {
                 sendBarcode(tile.getAttribute("data-barcode"));
+                if (tile.getAttribute("data-mode") === "Purchase" && typeof window.haStorageEnsureSession === "function")
+                    window.haStorageEnsureSession();
             });
         });
 

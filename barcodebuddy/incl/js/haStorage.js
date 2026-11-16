@@ -17,6 +17,8 @@
     var T = {
         de: {
             menu: "Einlagern …",
+            defaultLocation: "Standard-Lagerort des Produkts",
+            defaultLocationShort: "Standard-Lagerort",
             pickTitle: "Wo wird eingelagert?",
             storing: "Einlagern in",
             stop: "Beenden",
@@ -47,6 +49,8 @@
         },
         en: {
             menu: "Store items …",
+            defaultLocation: "Product's default location",
+            defaultLocationShort: "default location",
             pickTitle: "Where are you storing items?",
             storing: "Storing in",
             stop: "Stop",
@@ -301,6 +305,7 @@
         ".ha-actions .ha-never{background:#fff3e0;color:#e65100}" +
         ".ha-actions .ha-skip{background:#eee;color:#333}" +
         ".ha-loc{display:block;width:100%;margin:8px 0;font-size:1.5em}" +
+        ".ha-loc.ha-loc-default{background:#f3f4f6;color:#374151;font-size:1.2em}" +
         ".ha-more{margin-top:10px;color:#666}" +
         ".ha-icon{width:1.2em;height:1.2em;fill:currentColor;vertical-align:middle;flex:none}" +
         "#ha-banner .ha-banner-text{display:flex;align-items:center;gap:10px}#ha-banner .ha-icon{width:1.3em;height:1.3em}" +
@@ -331,7 +336,7 @@
         banner.innerHTML = "";
         var open = state.pending.length ? " · " + state.pending.length + " " + t("open") : "";
         banner.appendChild(el("span", {"class": "ha-banner-text"}, [icon("fridge"),
-            document.createTextNode(t("storing") + ": " + session.location_name + open)]));
+            document.createTextNode(t("storing") + ": " + locationLabel(session) + open)]));
         banner.appendChild(el("button", {text: t("stop"), onclick: stopSession}));
         banner.style.display = "flex";
         if (banner.classList.contains("ha-fixed"))
@@ -348,31 +353,58 @@
 
     // ------------------------------------------------------------------ Lagerort-Auswahl
 
+    function locationLabel(session) {
+        return session.location_id ? session.location_name : t("defaultLocationShort");
+    }
+
+    var pickerOpen = false, starting = false;
+
     function openPicker() {
         if (typeof window.closeNav === "function") window.closeNav();
+        if (pickerOpen) return;
+        pickerOpen = true;
         request("GET", "locations").then(function (locations) {
             var modal = el("div", {"class": "ha-modal"});
             var box = el("div", {"class": "ha-box"}, [el("h2", {text: t("pickTitle")})]);
+            function close() {
+                modal.remove();
+                pickerOpen = false;
+            }
+            function choose(id) {
+                starting = true;
+                request("POST", "start", {location_id: id}).then(function () {
+                    close();
+                    return refresh();
+                }).catch(showGlobalError).then(function () {
+                    starting = false;
+                });
+            }
             if (!locations.length) box.appendChild(el("p", {text: t("noLocations")}));
             locations.forEach(function (location) {
-                box.appendChild(el("button", {
-                    "class": "ha-loc", text: location.name, onclick: function () {
-                        request("POST", "start", {location_id: location.id}).then(function () {
-                            modal.remove();
-                            refresh();
-                        }).catch(showGlobalError);
-                    }
-                }));
+                box.appendChild(el("button", {"class": "ha-loc", text: location.name, onclick: function () {
+                    choose(location.id);
+                }}));
             });
+            // Ohne festen Lagerort einkaufen: Grocy nimmt den Standard-Lagerort des Produkts, MHD wird trotzdem abgefragt
+            box.appendChild(el("button", {"class": "ha-loc ha-loc-default", text: t("defaultLocation"), onclick: function () {
+                choose(0);
+            }}));
             box.appendChild(el("div", {"class": "ha-actions"}, [
-                el("button", {"class": "ha-skip", text: t("cancel"), onclick: function () {
-                    modal.remove();
-                }})
+                el("button", {"class": "ha-skip", text: t("cancel"), onclick: close})
             ]));
             modal.appendChild(box);
             document.body.appendChild(modal);
-        }).catch(showGlobalError);
+        }).catch(function (e) {
+            pickerOpen = false;
+            showGlobalError(e);
+        });
     }
+
+    /** Kauf-Modus ohne laufende Einlagerung: Lagerort waehlen lassen, damit das MHD abgefragt wird */
+    window.haStorageEnsureSession = function () {
+        if (pickerOpen || starting || (state && state.session)) return;
+        openPicker();
+    };
 
     // ------------------------------------------------------------------ MHD-Dialog
 
@@ -520,7 +552,7 @@
             el("h2", {text: t("bbTitle")}),
             item.has_picture ? el("img", {"class": "ha-pic", alt: "", src: API + "?action=picture&product=" + item.product_id}) : null,
             el("div", {"class": "ha-name", text: item.name}),
-            el("div", {"class": "ha-sub", text: (state.session ? state.session.location_name : "") + amount}),
+            el("div", {"class": "ha-sub", text: (state.session ? locationLabel(state.session) : "") + amount}),
             el("div", {"class": "ha-entry"}, [
                 el("div", {}, [display, preview, keys]),
                 el("div", {}, [

@@ -98,8 +98,12 @@ class HaStorage {
         return $locations;
     }
 
+    /**
+     * @param int $locationId Grocy-Lagerort oder 0 = Standard-Lagerort des jeweiligen Produkts
+     *                        (nur MHD-Abfrage, Lagerort bleibt wie in Grocy hinterlegt)
+     */
     public static function start(int $locationId): array {
-        $location = null;
+        $location = $locationId === 0 ? array("id" => 0, "name" => "") : null;
         foreach (self::getLocations() as $entry) {
             if ($entry["id"] === $locationId)
                 $location = $entry;
@@ -132,7 +136,7 @@ class HaStorage {
     /** Vor dem Einkauf: Lagerort der laufenden Einlagerung setzen */
     public static function beforePurchase(int $productId, array $data): array {
         $session = self::activeSession();
-        if ($session !== null)
+        if ($session !== null && (int)$session["location_id"] > 0)
             $data["location_id"] = (int)$session["location_id"];
         return $data;
     }

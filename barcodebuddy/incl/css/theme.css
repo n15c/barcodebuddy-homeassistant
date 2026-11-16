@@ -1,0 +1,542 @@
+/*
+ * Home-Assistant-Add-on: modernes Erscheinungsbild fuer die Barcode-Buddy-Oberflaeche.
+ * Liegt ueber Material Design Lite (material.*.css, main.css) und aendert nur das Aussehen.
+ * Farben und Formen passen zur Screen-Seite; Hell-/Dunkelmodus nach Systemeinstellung.
+ */
+
+:root {
+    --bb-bg: #f3f4f6;
+    --bb-surface: #ffffff;
+    --bb-surface-2: #f9fafb;
+    --bb-text: #111827;
+    --bb-muted: #6b7280;
+    --bb-border: #e5e7eb;
+    --bb-bar: #111827;
+    --bb-bar-text: #f9fafb;
+    --bb-primary: #16a34a;
+    --bb-primary-hover: #15803d;
+    --bb-primary-soft: #dcfce7;
+    --bb-accent: #2563eb;
+    --bb-danger: #dc2626;
+    --bb-radius: 16px;
+    --bb-radius-sm: 10px;
+    --bb-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 6px 20px rgba(0, 0, 0, .05);
+    --bb-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bb-bg: #0b1120;
+        --bb-surface: #111827;
+        --bb-surface-2: #1f2937;
+        --bb-text: #f3f4f6;
+        --bb-muted: #9ca3af;
+        --bb-border: #374151;
+        --bb-bar: #030712;
+        --bb-primary-soft: #14532d;
+        --bb-accent: #60a5fa;
+        --bb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+    }
+}
+
+/* ---------------------------------------------------------------- Grundlagen */
+
+html, body.bb-body, .bb-body .mdl-layout, .bb-body .mdl-layout__content {
+    background: var(--bb-bg);
+    color: var(--bb-text);
+    font-family: var(--bb-font);
+}
+
+.bb-body, .bb-body .mdl-card, .bb-body .mdl-card__supporting-text, .bb-body p, .bb-body li,
+.bb-body td, .bb-body th, .bb-body label, .bb-body .mdl-button, .bb-body input, .bb-body select, .bb-body textarea,
+.bb-body .mdl-checkbox__label, .bb-body .mdl-list__item, .bb-body .mdl-textfield__label {
+    font-family: var(--bb-font);
+}
+
+.bb-body a {
+    color: var(--bb-accent);
+}
+
+.bb-icon {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+    flex: none;
+}
+
+/* ---------------------------------------------------------------- Kopfzeile */
+
+.bb-body .bb-header {
+    background: var(--bb-bar);
+    color: var(--bb-bar-text);
+    box-shadow: none;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.bb-body .bb-header .mdl-layout__header-row {
+    height: 64px;
+    padding: 0 20px 0 72px;
+}
+
+.bb-body .mdl-layout--fixed-drawer.is-upgraded:not(.is-small-screen) .bb-header .mdl-layout__header-row {
+    padding-left: 24px;
+}
+
+.bb-title a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--bb-bar-text) !important;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: .01em;
+}
+
+.bb-title .bb-icon {
+    color: #4ade80;
+    width: 26px;
+    height: 26px;
+}
+
+/* Bei fester Seitenleiste steht der Name dort, nicht doppelt in der Kopfzeile */
+.mdl-layout--fixed-drawer.is-upgraded:not(.is-small-screen) .bb-title {
+    visibility: hidden;
+}
+
+.bb-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .1);
+    color: var(--bb-bar-text) !important;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: .95rem;
+    line-height: 1;
+    transition: background .15s;
+}
+
+.bb-pill:hover {
+    background: rgba(255, 255, 255, .18);
+}
+
+.bb-pill--primary {
+    background: var(--bb-primary);
+}
+
+.bb-pill--primary:hover {
+    background: var(--bb-primary-hover);
+}
+
+.bb-pill .bb-icon {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 480px) {
+    .bb-pill span {
+        display: none;
+    }
+    .bb-pill {
+        padding: 9px;
+    }
+}
+
+.bb-body .mdl-layout__drawer-button {
+    color: var(--bb-bar-text);
+    margin: 10px 8px;
+}
+
+/* ---------------------------------------------------------------- Seitenleiste */
+
+.bb-body .bb-drawer {
+    background: var(--bb-bar);
+    color: var(--bb-bar-text);
+    border-right: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.bb-body .bb-drawer .bb-drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 64px;
+    line-height: 64px;
+    padding: 0 20px;
+    color: var(--bb-bar-text);
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.bb-body .bb-drawer .bb-drawer-title .bb-icon {
+    color: #4ade80;
+    width: 26px;
+    height: 26px;
+}
+
+.bb-body .bb-drawer .mdl-navigation {
+    padding: 8px 12px;
+    flex: 1;
+}
+
+.bb-body .bb-drawer .mdl-navigation .mdl-navigation__link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    margin: 2px 0;
+    border-radius: 12px;
+    color: #d1d5db;
+    font-weight: 500;
+    font-size: .98rem;
+}
+
+.bb-body .bb-drawer .mdl-navigation .mdl-navigation__link:hover {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+.bb-body .bb-drawer .mdl-navigation .mdl-navigation__link.is-active {
+    background: rgba(22, 163, 74, .2);
+    color: #fff;
+}
+
+.bb-body .bb-drawer .mdl-navigation .mdl-navigation__link.is-active .bb-icon {
+    color: #4ade80;
+}
+
+.bb-drawer-footer {
+    padding: 16px 26px;
+    color: #6b7280;
+    font-size: .8rem;
+}
+
+/* ---------------------------------------------------------------- Inhalt und Karten */
+
+.bb-body .mdl-layout__content {
+    padding: 8px 0 24px;
+}
+
+.bb-body section.section--center {
+    max-width: 1200px;
+    width: calc(100% - 32px);
+    margin: 20px auto 0;
+    border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow) !important;
+    background: var(--bb-surface);
+    border: 1px solid var(--bb-border);
+    position: relative;
+}
+
+.bb-body .mdl-card {
+    background: var(--bb-surface);
+    border-radius: var(--bb-radius);
+    min-height: 0;
+    width: 100%;
+}
+
+.bb-body .mdl-card__supporting-text {
+    color: var(--bb-text);
+    padding: 22px 24px 24px;
+    font-size: .98rem;
+    line-height: 1.55;
+}
+
+.bb-body .mdl-card__supporting-text h4.bb-card-title {
+    margin: 0 0 16px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--bb-text);
+    letter-spacing: .01em;
+}
+
+/* Kartenmenue (drei Punkte) */
+.bb-body section.section--center > .mdl-button--icon {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: var(--bb-muted);
+}
+
+.bb-body .mdl-menu__outline {
+    border-radius: 12px;
+    background: var(--bb-surface);
+}
+
+.bb-body .mdl-menu__item {
+    color: var(--bb-text);
+    font-family: var(--bb-font);
+}
+
+.bb-body .mdl-menu__item:hover {
+    background: var(--bb-surface-2);
+}
+
+/* ---------------------------------------------------------------- Tabellen */
+
+.bb-body .mdl-data-table {
+    border: 1px solid var(--bb-border);
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    background: var(--bb-surface);
+    width: 100%;
+}
+
+.bb-body .mdl-data-table th {
+    background: var(--bb-surface-2);
+    color: var(--bb-muted);
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid var(--bb-border);
+}
+
+.bb-body .mdl-data-table td {
+    border-top: 1px solid var(--bb-border);
+    border-bottom: 0;
+    color: var(--bb-text);
+    font-size: .95rem;
+    vertical-align: middle;
+}
+
+.bb-body .mdl-data-table tbody tr:first-child td {
+    border-top: 0;
+}
+
+.bb-body .mdl-data-table tbody tr:hover {
+    background: var(--bb-surface-2);
+}
+
+.bb-body .mdl-data-table td, .bb-body .mdl-data-table th {
+    padding: 12px 16px;
+    height: auto;
+    text-align: left;
+}
+
+/* ---------------------------------------------------------------- Knoepfe */
+
+.bb-body .mdl-button {
+    border-radius: 10px;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: .01em;
+    font-size: .92rem;
+    height: 38px;
+    line-height: 38px;
+    padding: 0 16px;
+    color: var(--bb-text);
+}
+
+.bb-body .mdl-button:hover {
+    background: var(--bb-surface-2);
+}
+
+.bb-body .mdl-button--raised, .bb-body .mdl-button--accent.mdl-button--raised, .bb-body .mdl-button--colored.mdl-button--raised,
+.bb-body .mdl-button.mdl-color--accent, .bb-body .mdl-button--fab.mdl-button--colored {
+    background: var(--bb-primary) !important;
+    color: #fff !important;
+    box-shadow: none;
+}
+
+.bb-body .mdl-button--raised:hover, .bb-body .mdl-button.mdl-color--accent:hover {
+    background: var(--bb-primary-hover) !important;
+}
+
+.bb-body .mdl-button[disabled], .bb-body .mdl-button--raised[disabled] {
+    background: var(--bb-surface-2) !important;
+    color: var(--bb-muted) !important;
+    opacity: .7;
+}
+
+.bb-body .mdl-button--icon {
+    border-radius: 50%;
+    height: 36px;
+    width: 36px;
+    min-width: 36px;
+    padding: 0;
+    line-height: 36px;
+}
+
+.bb-body button[name="button_delete"] {
+    color: var(--bb-danger);
+}
+
+/* Schwebende Knoepfe (Barcode hinzufuegen, Einstellungen speichern) */
+.bb-body #add-barcode, .bb-body #save-settings {
+    border-radius: 999px;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 24px;
+    font-size: 1rem;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, .35);
+}
+
+/* ---------------------------------------------------------------- Formulare */
+
+.bb-body select, .bb-body textarea, .bb-body input[type="text"], .bb-body input[type="number"],
+.bb-body input[type="password"], .bb-body input[type="email"], .bb-body input[type="url"] {
+    color: var(--bb-text);
+}
+
+.bb-body select {
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--bb-border);
+    background: var(--bb-surface);
+    font-size: .95rem;
+    max-width: 100%;
+}
+
+.bb-body .mdl-textfield__input {
+    border-bottom: 1px solid var(--bb-border);
+}
+
+.bb-body .mdl-textfield__label {
+    color: var(--bb-muted);
+}
+
+.bb-body .mdl-textfield--floating-label.is-focused .mdl-textfield__label,
+.bb-body .mdl-textfield--floating-label.is-dirty .mdl-textfield__label,
+.bb-body .mdl-textfield--floating-label.has-placeholder .mdl-textfield__label {
+    color: var(--bb-accent);
+}
+
+.bb-body .mdl-textfield__label:after {
+    background-color: var(--bb-accent);
+}
+
+.bb-body textarea.mdl-textfield__input {
+    border: 1px solid var(--bb-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: var(--bb-surface-2);
+}
+
+.bb-body .mdl-checkbox.is-checked .mdl-checkbox__box-outline {
+    border-color: var(--bb-primary);
+}
+
+.bb-body .mdl-checkbox.is-checked .mdl-checkbox__tick-outline {
+    background-color: var(--bb-primary);
+}
+
+.bb-body .mdl-switch.is-checked .mdl-switch__track {
+    background: rgba(22, 163, 74, .45);
+}
+
+.bb-body .mdl-switch.is-checked .mdl-switch__thumb {
+    background: var(--bb-primary);
+}
+
+.bb-body .mdl-checkbox__label, .bb-body .mdl-list__item, .bb-body .mdl-list__item-primary-content {
+    color: var(--bb-text);
+}
+
+.bb-body .mdl-list__item-sub-title, .bb-body .mdl-list__item-text-body {
+    color: var(--bb-muted);
+}
+
+.bb-body .mdl-list__item {
+    border-radius: 12px;
+}
+
+/* Protokoll */
+.bb-body #f2 textarea, .bb-body .bb-log {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .85rem;
+}
+
+/* ---------------------------------------------------------------- Dialoge */
+
+.bb-body .modalmain-content, .bb-body .modal-content {
+    border-radius: var(--bb-radius);
+    background: var(--bb-surface);
+    color: var(--bb-text);
+    border: 1px solid var(--bb-border);
+}
+
+.bb-body .modal-header, .bb-body .modal-footer {
+    border-color: var(--bb-border);
+}
+
+.bb-body .btn-primary {
+    background: var(--bb-primary);
+    border-color: var(--bb-primary);
+    border-radius: 10px;
+}
+
+.bb-body .btn-secondary, .bb-body .btn-default {
+    border-radius: 10px;
+}
+
+.bb-body .mdl-snackbar {
+    border-radius: 12px;
+    background: var(--bb-bar);
+}
+
+/* ---------------------------------------------------------------- Fusszeile */
+
+.bb-body .bb-footer {
+    background: transparent;
+    padding: 24px 32px;
+    justify-content: center;
+}
+
+.bb-body .bb-footer .mdl-mini-footer__link-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
+    color: var(--bb-muted);
+    font-size: .85rem;
+}
+
+.bb-body .bb-footer .mdl-mini-footer__link-list li {
+    margin: 0;
+}
+
+.bb-body .bb-footer a {
+    color: var(--bb-muted);
+}
+
+.bb-body .bb-footer a:hover {
+    color: var(--bb-text);
+}
+
+.bb-body section.section--footer {
+    display: none;
+}
+
+/* ---------------------------------------------------------------- Dunkelmodus: MDL-Graufarben angleichen */
+
+@media (prefers-color-scheme: dark) {
+    .bb-body .mdl-color-text--grey-700, .bb-body .mdl-color-text--grey-600 {
+        color: var(--bb-text) !important;
+    }
+    .bb-body .mdl-color--grey-100, .bb-body .mdl-color--white {
+        background: var(--bb-bg) !important;
+    }
+    .bb-body .mdl-checkbox__box-outline {
+        border-color: var(--bb-muted);
+    }
+    .bb-body input, .bb-body textarea {
+        color: var(--bb-text);
+    }
+    .bb-body .modal-content .close {
+        color: var(--bb-text);
+    }
+}
