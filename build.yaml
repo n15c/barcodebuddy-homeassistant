@@ -1,9 +1,9 @@
 ---
 squash: false
 build_from:
-  arm64: f0rc3/barcodebuddy:latest
-  aarch64: f0rc3/barcodebuddy:latest
-  amd64: f0rc3/barcodebuddy:latest
-  armv7: f0rc3/barcodebuddy:latest
-  i386: f0rc3/barcodebuddy:latest
+  arm64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+  aarch64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+  amd64: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+  armv7: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+  i386: f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
 args: {}

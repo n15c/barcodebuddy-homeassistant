@@ -4,6 +4,7 @@ configuration:
     name: Disable login
     description: >-
       Disables the BarcodeBuddy login on the direct port (8621).
+      Warning: anyone on your network then has full access without logging in.
       Access via Home Assistant (Ingress) never needs a separate login.
   debug:
     name: Debug mode
@@ -30,7 +31,32 @@ configuration:
   SCANNER_DEBUG:
     name: Scanner diagnostics
     description: >-
-      At startup, logs key presses from all input devices for 30 seconds.
-      Scan a barcode during this time to find out which device is the scanner.
+      At startup, logs key presses of the selected scanner device for 30
+      seconds. Scan a barcode during this time to check that the right device
+      is selected. Warning: for a keyboard, typed text ends up in the log as
+      well, so only enable it briefly for troubleshooting.
+  auto_create_products:
+    name: Create unknown products automatically
+    description: >-
+      Unknown barcodes are looked up on Open Food Facts and created as a product in
+      Grocy right away, with name, picture, brand, quantity, ingredients, allergens,
+      nutrition facts and energy. The scan is then booked as usual (e.g. purchase).
+      If nothing is found, the barcode goes to the list of unknown barcodes as before.
+  auto_create_location:
+    name: Location for new products
+    description: >-
+      Name of a location in Grocy (e.g. "Pantry"). Leave empty to use Grocy's preset
+      for new products or the first location. Can be changed per product in Grocy later.
+  auto_create_quantity_unit:
+    name: Quantity unit for new products
+    description: >-
+      Name of a quantity unit in Grocy (e.g. "Piece" or "Pack"). Leave empty to use
+      Grocy's preset for new products or the first quantity unit. Can be changed per
+      product in Grocy later.
+  product_language:
+    name: Product data language
+    description: >-
+      Two-letter language code (e.g. de, en, fr) for product names and ingredients
+      from Open Food Facts and for the labels in the product description.
 network:
   80/tcp: Web interface (direct access, e.g. for the API and scanner apps)
