@@ -174,14 +174,16 @@ class HaI18n {
         }, $html);
 
         // Textknoten
-        $html = preg_replace_callback('/>([^<>]+)</u', function ($m) {
-            $text    = $m[1];
-            $trimmed = trim(html_entity_decode($text, ENT_QUOTES | ENT_HTML5, "UTF-8"));
-            if ($trimmed === "" || !isset(self::DE[$trimmed]))
+        // (Text kann auch direkt hinter einem herausgenommenen Skript stehen; fuehrende/abschliessende
+        // Leerzeichen inkl. &nbsp; bleiben erhalten)
+        $space = '(?:\s|&nbsp;|&#160;|\x{00A0})*';
+        $html  = preg_replace_callback('/(?<=>|\x00)([^<>\x00]+)(?=<|\x00)/u', function ($m) use ($space) {
+            if (!preg_match('/^(' . $space . ')(.*?)(' . $space . ')$/us', $m[1], $parts))
                 return $m[0];
-            $lead  = substr($text, 0, strlen($text) - strlen(ltrim($text)));
-            $trail = substr($text, strlen(rtrim($text)));
-            return ">" . $lead . htmlspecialchars(self::DE[$trimmed], ENT_QUOTES, "UTF-8") . $trail . "<";
+            $key = html_entity_decode($parts[2], ENT_QUOTES | ENT_HTML5, "UTF-8");
+            if ($key === "" || !isset(self::DE[$key]))
+                return $m[0];
+            return $parts[1] . htmlspecialchars(self::DE[$key], ENT_QUOTES, "UTF-8") . $parts[3];
         }, $html);
 
         // Attribute fuer Hinweise

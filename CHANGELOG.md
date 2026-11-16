@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- Einstellungen: lange Checkbox-Texte überlappen nicht mehr, Untertitel im Dunkelmodus lesbar
+- Fehlende Übersetzungen ergänzt (Texte nach Skript-Blöcken und mit geschützten Leerzeichen)
+
 ## 1.2.0
 
 - Weboberfläche auf Deutsch (Option „Sprache“ = `de`)
