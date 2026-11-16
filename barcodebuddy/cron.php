@@ -29,7 +29,6 @@ if ($config["USE_REDIS"]) {
     RedisConnection::updateCache($softUpdate);
 }
 
-BarcodeFederation::doScheduledSyncBarcodes();
 
 // Home-Assistant-Add-on: Produktbilder nachladen, deren Download beim Scan fehlschlug
 require_once __DIR__ . "/incl/haAutoCreate.inc.php";

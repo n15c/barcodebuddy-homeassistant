@@ -146,7 +146,9 @@ function getHtmlSettingsBarcodeLookup(): string {
     $providerList = getProviderListItems($html);
     $orderAsArray = explode(",", $config["LOOKUP_ORDER"]);
     foreach ($orderAsArray as $orderId) {
-        $html->addHtml($providerList["id" . $orderId]);
+        // Gespeicherte Reihenfolge kann entfernte Anbieter enthalten (z.B. Federation)
+        if (isset($providerList["id" . $orderId]))
+            $html->addHtml($providerList["id" . $orderId]);
     }
 
 
@@ -250,11 +252,6 @@ function getProviderListItems(UiEditor $html): array {
         "handleDiscogsChange(this)",
         generateApiKeyChangeScript("handleDiscogsChange", "LOOKUP_DISCOGS_TOKEN"))
         ->generate(true), "Uses Discogs.com", LOOKUP_ID_DISCOGS, true);
-
-    $bbServerSubtitle                    = "Uses " . BarcodeFederation::HOST_READABLE;
-    if (!$config["BBUDDY_SERVER_ENABLED"])
-        $bbServerSubtitle = "Enable Federation for this feature";
-    $result["id" . LOOKUP_ID_FEDERATION] = $html->addListItem($html->addCheckbox('LOOKUP_USE_BBUDDY_SERVER', 'Barcode Buddy Federation', $config["LOOKUP_USE_BBUDDY_SERVER"], !$config["BBUDDY_SERVER_ENABLED"], false, true), $bbServerSubtitle, LOOKUP_ID_FEDERATION, true);
     return $result;
 }
 
@@ -287,7 +284,7 @@ function checkRedisConnection(UiEditor &$html): void {
     } else {
         $html->addHtml('<span style="color:green">Redis cache is available.</span>');
         $html->addSpaces(4);
-        $html->addButton("updatecache", "Update Cache", "updateRedisCacheAndFederation(true)");
+        $html->addButton("updatecache", "Update Cache", "updateRedisCache(true)");
     }
 }
 

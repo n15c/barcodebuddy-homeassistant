@@ -241,8 +241,7 @@ class WebUiGenerator {
           <a class="mdl-navigation__link" href="' . $folder . 'menu/quantities.php">Quantities</a>
           <a class="mdl-navigation__link" href="' . $folder . 'menu/chores.php">Chores</a>
           <a class="mdl-navigation__link" href="' . $folder . 'menu/tags.php">Tags</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/apimanagement.php">API</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/federation.php">Federation</a>');
+          <a class="mdl-navigation__link" href="' . $folder . 'menu/apimanagement.php">API</a>');
             if (!$CONFIG->DISABLE_AUTHENTICATION) {
                 $this->addHtml('
              <a class="mdl-navigation__link" href="' . $folder . 'menu/admin.php">Admin</a>');
@@ -317,7 +316,6 @@ class WebUiGenerator {
             $this->addHtml('<button id="save-settings" onclick="checkAndReturn()" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color--accent mdl-color-text--accent-contrast">Save</button>');
         }
         $this->addHtml('</div><script src="' . $folder . 'incl/js/material.min.js?v=' . BB_VERSION . '"></script>' .
-            '<script src="' . $folder . 'incl/js/federation.js?v=' . BB_VERSION . '"></script>' .
             '<script src="' . $folder . 'incl/js/scripts.js?v=' . BB_VERSION . '"></script>');
 
         if ($this->menu == MENU_MAIN) {
