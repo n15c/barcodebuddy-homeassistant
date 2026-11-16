@@ -119,6 +119,7 @@ check("Federation entfernt", strpos($html, "federation") === false && http("GET"
 exec("cd " . escapeshellarg($app) . " && php -r 'require \"incl/configProcessing.inc.php\"; require \"incl/db.inc.php\"; DatabaseConnection::getInstance()->updateConfig(\"LOOKUP_ORDER\", \"1,2,3,4,5,6,7,8,9\");'");
 list($status, , $html) = http("GET", "menu/settings.php");
 check("Einstellungen mit alter Lookup-Reihenfolge (Federation-ID 7)", $status === 200 && strpos($html, "Fatal") === false);
+check("Übersetzung auch nach Skript-Blöcken und mit &nbsp;", strpos($html, "Reihenfolge per Ziehen") !== false && strpos($html, "Nutzt OpenFoodFacts.org") !== false);
 check("Screen-Seite lädt", http("GET", "screen.php")[0] === 200);
 
 echo "\n$checked Prüfungen, " . ($checked - $failed) . " bestanden\n";

@@ -446,8 +446,26 @@ html, body.bb-body, .bb-body .mdl-layout, .bb-body .mdl-layout__content {
     color: var(--bb-text);
 }
 
-.bb-body .mdl-list__item-sub-title, .bb-body .mdl-list__item-text-body {
+/* MDL setzt Untertitel fest auf Schwarz (54 %); im Dunkelmodus sonst unlesbar */
+.bb-body .mdl-list__item-sub-title, .bb-body .mdl-list__item-text-body,
+.bb-body .mdl-list__item--two-line .mdl-list__item-primary-content .mdl-list__item-sub-title,
+.bb-body .mdl-list__item--three-line .mdl-list__item-primary-content .mdl-list__item-text-body {
     color: var(--bb-muted);
+}
+
+/* Checkboxen und Schalter: lange (z.B. deutsche) Texte duerfen umbrechen, ohne die naechste Zeile zu ueberdecken */
+.bb-body .mdl-checkbox, .bb-body .mdl-switch {
+    height: auto;
+    min-height: 24px;
+    line-height: 1.4;
+    align-items: flex-start;
+    margin: 6px 0;
+}
+
+.bb-body .mdl-checkbox__label {
+    display: block;
+    line-height: 1.4;
+    padding-top: 1px;
 }
 
 .bb-body .mdl-list__item {
