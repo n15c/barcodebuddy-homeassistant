@@ -97,7 +97,9 @@ class WebUiGenerator {
 
 
     public function printHtml(): void {
-        echo $this->htmlOutput;
+        // Home-Assistant-Add-on: Oberflaeche auf Deutsch, wenn eingestellt
+        require_once __DIR__ . "/haI18n.inc.php";
+        echo HaI18n::translatePage($this->htmlOutput);
     }
 
 

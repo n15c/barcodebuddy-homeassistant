@@ -16,7 +16,7 @@ Produkte werden aus Open Food Facts angelegt, beim Einkaufen wird das Mindesthal
 |---|---|
 | Unbekannte Produkte automatisch anlegen | Produkte aus Open Food Facts in Grocy anlegen (Standard: an) |
 | Lagerort / Mengeneinheit für neue Produkte | Namen wie in Grocy; leer = Grocy-Voreinstellung |
-| Sprache der Produktdaten | Sprache für Produktdaten und Oberfläche der Screen-Seite (`de`, `en`, …) |
+| Sprache | Sprache für Produktdaten und die gesamte Oberfläche (`de` = Deutsch, sonst Englisch) |
 | Barcodescanner anbinden / Scanner-Gerät | Scanner bzw. Tastatur am Home-Assistant-Host verwenden |
 | Scanner-Diagnose | 30 Sekunden lang Tastendrücke ins Log schreiben (nur zur Fehlersuche) |
 | Anmeldung deaktivieren | Kein Login am direkten Port 8621 (über Home Assistant ist nie ein Login nötig) |
@@ -126,18 +126,18 @@ In der Add-on-Konfiguration:
 Home Assistant gibt dem Add-on nur auf das gewählte Eingabegerät Zugriff; es wird an Barcode Buddy übergeben.
 Erweiterter Hardware-Zugriff (`full_access`) ist dafür nicht nötig.
 
-## Datenablage und Update von Version 0.4.x
+## Datenablage
 
-Ab Version 0.5.0 liegen die Barcode Buddy-Daten im eigenen Add-on-Ordner
-(`/addon_configs/<id>_bbuddy-grocy/data`) statt in der Home-Assistant-Konfiguration.
-Beim ersten Start nach dem Update werden `barcodebuddy.db`, `users.db` und `config.php`
-automatisch aus `<HA-Konfiguration>/data` übernommen. Danach können die alten Ordner
-`data` und `keys` in der Home-Assistant-Konfiguration gelöscht werden (vorher prüfen, dass
-sie nicht von etwas anderem genutzt werden).
+Die Barcode-Buddy-Daten (`barcodebuddy.db`, `users.db`, `config.php`) liegen im Add-on-Ordner
+`/addon_configs/<id>_bbuddy-grocy/data` und sind in Home-Assistant-Backups des Add-ons enthalten.
+
+**Update von Version 0.4.x oder älter:** Diese Versionen speicherten die Daten in `<HA-Konfiguration>/data`.
+Die automatische Übernahme gab es bis Version 1.1.0. Wer direkt von 0.4.x aktualisiert, installiert zuerst
+1.1.0 (oder kopiert die drei Dateien von Hand in den neuen Ordner).
 
 ## Sicherheit
 
-- Die Home-Assistant-Konfiguration ist nur noch lesend eingebunden (für die Datenübernahme).
+- Das Add-on hat keinen Zugriff auf die Home-Assistant-Konfiguration, nur auf seinen eigenen Ordner.
 - Ingress ist nur für Administratoren sichtbar und nur vom Home-Assistant-Supervisor erreichbar.
 - Der direkte Port `8621` ist unverschlüsselt (HTTP). Wird er nicht gebraucht, unter *Netzwerk* leeren.
   `disable_auth` nur aktivieren, wenn niemand Unbefugtes das Netzwerk erreicht.

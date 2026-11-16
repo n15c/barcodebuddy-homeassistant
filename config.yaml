@@ -22,8 +22,6 @@ udev: true
 map:
 # Eigener Konfigurationsordner des Add-ons (/config im Container)
 - addon_config:rw
-# Nur lesend, fuer die einmalige Uebernahme der Daten aus frueheren Versionen
-- homeassistant_config:ro
 ports:
   80/tcp: 8621
 ports_description:

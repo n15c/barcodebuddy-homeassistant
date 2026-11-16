@@ -55,9 +55,10 @@ configuration:
       um die Grocy-Voreinstellung für neue Produkte bzw. die erste Mengeneinheit zu
       verwenden. Kann pro Produkt später in Grocy geändert werden.
   product_language:
-    name: Sprache der Produktdaten
+    name: Sprache
     description: >-
       Zweistelliger Sprachcode (z.B. de, en, fr) für Produktnamen und Zutaten von
-      Open Food Facts sowie für die Beschriftungen in der Produktbeschreibung.
+      Open Food Facts, die Produktbeschreibung und die Oberfläche (de = Deutsch,
+      sonst Englisch).
 network:
   80/tcp: Weboberfläche (direkter Zugriff, z.B. für die API und Scanner-Apps)

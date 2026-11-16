@@ -54,9 +54,10 @@ configuration:
       Grocy's preset for new products or the first quantity unit. Can be changed per
       product in Grocy later.
   product_language:
-    name: Product data language
+    name: Language
     description: >-
       Two-letter language code (e.g. de, en, fr) for product names and ingredients
-      from Open Food Facts and for the labels in the product description.
+      from Open Food Facts, the product description and the user interface
+      (de = German, otherwise English).
 network:
   80/tcp: Web interface (direct access, e.g. for the API and scanner apps)
