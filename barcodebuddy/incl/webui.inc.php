@@ -227,7 +227,7 @@ class WebUiGenerator {
                 $this->addHtml('<a class="mdl-navigation__link" target="_blank" href="' . BBConfig::getInstance()["GROCY_BASE_URL"] . '">Grocy</a>');
 
             if (!$CONFIG->HIDE_LINK_SCREEN)
-                $this->addHtml('<a class="mdl-navigation__link" target="_blank" href="' . $folder . 'screen.php">Screen</a>');
+                $this->addHtml('<a class="mdl-navigation__link" href="' . $folder . 'screen.php">Screen</a>');
             $this->addHtml('</nav>');
         }
         $this->addHtml('  </div>
@@ -276,8 +276,9 @@ class WebUiGenerator {
         <div class="mdl-logo">Barcode Buddy </div>
         <ul class="mdl-mini-footer__link-list">
               <li><a href="https://barcodebuddy-documentation.readthedocs.io/en/latest/">Documentation</a></li>
-              <li><a href="https://github.com/Forceu/barcodebuddy/">Source Code</a></li>
-              <li><a href="https://github.com/Forceu/barcodebuddy/blob/master/LICENSE">License</a></li>
+              <li><a href="https://github.com/n15c/barcodebuddy-homeassistant/tree/master/barcodebuddy">Source Code (Home Assistant Add-on)</a></li>
+              <li><a href="https://github.com/Forceu/barcodebuddy/">Original</a></li>
+              <li><a href="https://github.com/n15c/barcodebuddy-homeassistant/blob/master/barcodebuddy/LICENSE.md">License (AGPL-3.0)</a></li>
           <li>Version ' . BB_VERSION_READABLE . '</li>
               <li>by Marc Ole Bulling</li>
         </ul>

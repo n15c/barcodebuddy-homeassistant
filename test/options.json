@@ -1,0 +1,13 @@
+{
+  "disable_auth": false,
+  "debug": false,
+  "curl_allow_insecure_ssl_ca": false,
+  "curl_allow_insecure_ssl_host": false,
+  "ATTACH_BARCODESCANNER": false,
+  "SCANNER_DEVICE": "",
+  "SCANNER_DEBUG": false,
+  "auto_create_products": true,
+  "auto_create_location": "",
+  "auto_create_quantity_unit": "",
+  "product_language": "de"
+}

@@ -1,0 +1,42 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# Liest Barcodes vom am Home-Assistant-Host angeschlossenen Scanner (Option ATTACH_BARCODESCANNER).
+
+DEVICE="$(bashio::config 'SCANNER_DEVICE')"
+
+# Diagnose: 30 Sekunden lang Tastendruecke des gewaehlten Geraets ins Log schreiben.
+# Home Assistant gibt dem Add-on nur auf das gewaehlte Geraet Zugriff.
+if bashio::config.true 'SCANNER_DEBUG'; then
+    bashio::log.info "SCANNER_DEBUG: 30 Sekunden lang Tastendruecke anzeigen - jetzt einen Barcode scannen!"
+    for d in /dev/input/event*; do
+        [ -e "$d" ] || continue
+        ( timeout 30 evtest "$d" 2>&1 | awk -v p="[$(basename "$d")] " \
+            '/EV_KEY.*value 1/ { print p $0; fflush() } /^evtest: / { print p "kein Zugriff (" $0 ")"; fflush() }' ) &
+    done
+    wait
+    bashio::log.info "SCANNER_DEBUG beendet."
+fi
+
+if ! bashio::config.true 'ATTACH_BARCODESCANNER'; then
+    bashio::log.info "Kein Barcodescanner angebunden (Option ATTACH_BARCODESCANNER ist aus)"
+    exec sleep infinity
+fi
+if [ -z "$DEVICE" ] || [ "$DEVICE" = "null" ]; then
+    bashio::log.warning "ATTACH_BARCODESCANNER ist aktiv, aber kein SCANNER_DEVICE gewaehlt"
+    exec sleep infinity
+fi
+if [ ! -e "$DEVICE" ]; then
+    bashio::log.warning "Geraet ${DEVICE} gibt es im Container nicht - Scanner wird nicht angebunden"
+    exec sleep infinity
+fi
+
+# Symlinks (/dev/input/by-id/...) zu /dev/input/eventX aufloesen
+DEVICE="$(readlink -f "$DEVICE")"
+EV="$(basename "$DEVICE")"
+if [ -r /proc/bus/input/devices ]; then
+    NAME="$(awk -v ev="$EV" 'BEGIN{RS="";FS="\n"} $0 ~ ("Handlers=.*" ev "( |$)") {for(i=1;i<=NF;i++) if($i ~ /^N:/) print $i}' /proc/bus/input/devices)"
+    bashio::log.info "Scanner/Tastatur: ${DEVICE} ${NAME}"
+fi
+
+export SCANNER_DEVICE="$DEVICE" ATTACH_BARCODESCANNER=true IS_DOCKER=true
+exec /app/bbuddy/example/grabInput.sh "$DEVICE"

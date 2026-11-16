@@ -1,43 +1,55 @@
-# Basis-Image ist auf Version und Digest festgelegt; Updates bewusst hier und in build.yaml anheben.
-FROM f0rc3/barcodebuddy:v1.9.0.1@sha256:f2496ffce1c2b8216be6a8046255fd546b495ef8c98458b47099710341830d5a
+# Barcode Buddy als Home-Assistant-Add-on.
+# Basis: offizielles Home-Assistant-Image (Alpine, s6-overlay, bashio), siehe build.yaml.
+ARG BUILD_FROM
+FROM ${BUILD_FROM}
 
-# Build arguments
 ARG BUILD_ARCH
-ARG BUILD_DATE
-ARG BUILD_REF
 ARG BUILD_VERSION
 
-# Labels
+# PHP 8.4 gibt es fuer alle Architekturen (armv7/i386 nur bis Alpine 3.22)
+RUN apk add --no-cache \
+        evtest \
+        nginx \
+        redis \
+        php84 \
+        php84-ctype \
+        php84-curl \
+        php84-fileinfo \
+        php84-fpm \
+        php84-gettext \
+        php84-mbstring \
+        php84-openssl \
+        php84-pdo \
+        php84-pdo_sqlite \
+        php84-pecl-redis \
+        php84-session \
+        php84-simplexml \
+        php84-sockets \
+        php84-sqlite3 \
+        php84-xml \
+        php84-xmlwriter \
+    && ln -sf /usr/bin/php84 /usr/bin/php \
+    && ln -sf /usr/bin/php84 /usr/bin/php8 \
+    && rm -f /etc/nginx/http.d/default.conf /etc/php84/php-fpm.d/www.conf \
+    && addgroup -S barcodebuddy \
+    && adduser -S -D -H -h /config -s /sbin/nologin -G barcodebuddy barcodebuddy
+
+# Barcode Buddy (Ordner barcodebuddy/, AGPL-3.0) und Add-on-Dateien
+COPY barcodebuddy/ /app/bbuddy/
+COPY rootfs /
+
+# Daten liegen im Add-on-Konfigurationsordner (/config = /addon_configs/<id>_bbuddy-grocy)
+RUN rm -rf /app/bbuddy/data \
+    && ln -s /config/data /app/bbuddy/data \
+    && chown -R barcodebuddy:barcodebuddy /app/bbuddy \
+    && chmod +x /app/bbuddy/example/grabInput.sh /etc/s6-overlay/s6-rc.d/*/run \
+    && php -l /app/bbuddy/index.php > /dev/null \
+    && nginx -t -c /etc/nginx/nginx.conf \
+    && php-fpm84 -t -y /etc/php84/php-fpm.conf
+
 LABEL \
     io.hass.name="Barcode Buddy for Grocy" \
     io.hass.description="Barcode system for Grocy" \
     io.hass.arch="${BUILD_ARCH}" \
     io.hass.type="addon" \
-    io.hass.version=${BUILD_VERSION} 
-
-# Home-Assistant-Optionen -> Umgebungsvariablen (ATTACH_BARCODESCANNER, SCANNER_DEVICE)
-COPY rootfs /
-RUN chmod +x /usr/local/bin/ha-entrypoint.sh /usr/local/share/ha-grabInput.sh
-
-# Erweiterungen: unbekannte Produkte automatisch aus Open Food Facts in Grocy anlegen,
-# Einlagerungsmodus mit MHD-Abfrage, neu gestaltete Screen-Seite (ersetzt die Original-screen.php).
-# Vorher pruefen, dass die Original-Seite noch das Live-Protokoll nutzt, auf dem die neue aufbaut.
-RUN grep -q 'incl/sse/sse_data.php?getState' /app/bbuddy/screen.php \
- && grep -q 'resultJson.data.substring(0, 1)' /app/bbuddy/screen.php \
- && grep -q "case '4':" /app/bbuddy/screen.php \
- && [ -f /app/bbuddy/incl/js/nosleep.min.js ] && [ -f /app/bbuddy/incl/js/he.js ] \
- || { echo "BarcodeBuddy-screen.php hat sich geaendert - bbuddy/screen.php anpassen" >&2; exit 1; }
-COPY bbuddy/ /app/bbuddy/
-COPY build/patch-bbuddy.php /tmp/patch-bbuddy.php
-RUN [ -x /usr/bin/php ] || ln -s /usr/bin/php8 /usr/bin/php; \
-    php /tmp/patch-bbuddy.php \
- && php -l /app/bbuddy/incl/processing.inc.php \
- && php -l /app/bbuddy/incl/api.inc.php \
- && php -l /app/bbuddy/incl/haAutoCreate.inc.php \
- && php -l /app/bbuddy/incl/haStorage.inc.php \
- && php -l /app/bbuddy/ha_storage.php \
- && php -l /app/bbuddy/screen.php \
- && php -l /app/bbuddy/cron.php \
- && rm /tmp/patch-bbuddy.php
-ENTRYPOINT ["/usr/local/bin/ha-entrypoint.sh"]
-CMD []
+    io.hass.version="${BUILD_VERSION}"

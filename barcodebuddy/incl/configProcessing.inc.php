@@ -119,7 +119,34 @@ class GlobalConfig {
     //Gets all the public variables declared above and checks if there
     //is an environment variable for this function. If yes, the
     //environment variable replaces the values in config.php
+    /**
+     * Home-Assistant-Add-on: Optionen aus der Add-on-Konfiguration, die BarcodeBuddy-Einstellungen
+     * einschalten. Nur aktivierte Optionen wirken, damit Einstellungen in config.php erhalten bleiben.
+     * Vom Add-on-Start nach /etc/bbuddy-ha/options.json kopiert.
+     */
+    const HA_OPTIONS_FILE = "/etc/bbuddy-ha/options.json";
+    const HA_OPTION_MAP   = array(
+        "disable_auth"                 => "DISABLE_AUTHENTICATION",
+        "debug"                        => "IS_DEBUG",
+        "curl_allow_insecure_ssl_ca"   => "CURL_ALLOW_INSECURE_SSL_CA",
+        "curl_allow_insecure_ssl_host" => "CURL_ALLOW_INSECURE_SSL_HOST",
+    );
+
+    private function loadHomeAssistantOptions(): void {
+        $file = getenv("BBUDDY_HA_OPTIONS_FILE") ?: self::HA_OPTIONS_FILE;
+        if (!is_readable($file))
+            return;
+        $options = json_decode((string)file_get_contents($file), true);
+        if (!is_array($options))
+            return;
+        foreach (self::HA_OPTION_MAP as $option => $property) {
+            if (($options[$option] ?? false) === true)
+                $this->{$property} = true;
+        }
+    }
+
     private function loadConfig(): void {
+        $this->loadHomeAssistantOptions();
         $environmentVariables = getenv();
         $reflect              = new ReflectionClass($this);
         $props                = $reflect->getProperties(ReflectionProperty::IS_PUBLIC);

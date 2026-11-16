@@ -1,27 +1,27 @@
 #!/bin/bash
+# Liest Barcodes von einem Scanner (oder einer Tastatur) und uebergibt sie an Barcode Buddy.
+#
+# Aufruf: grabInput.sh [/dev/input/eventX]
+#  - Ohne Argument wird $SCANNER_DEVICE verwendet bzw. das einzige Geraet in /dev/input/
+#  - Ein Scan gilt auch ohne KEY_ENTER als abgeschlossen, wenn SCAN_TIMEOUT Sekunden lang
+#    keine Taste mehr kommt (fuer Scanner ohne Enter-Suffix)
+#  - Barcode Buddy wird als $WWW_USER aufgerufen (s6-setuidgid, sonst sudo)
+#
+# Im Home-Assistant-Add-on startet der Dienst "grabber" dieses Skript.
 
-#Needs to be adjusted if Barcode Buddy runs on the same server
-SCRIPT_LOCATION="${SCRIPT_LOCATION:="/var/www/html/barcodebuddy/index.php"}"
-#Needs to be adjusted if Barcode Buddy runs on an external server
+SCRIPT_LOCATION="${SCRIPT_LOCATION:="/app/bbuddy/index.php"}"
 SERVER_ADDRESS="${SERVER_ADDRESS:="https://your.bbuddy.url/api/"}"
-#Set to true if an external server is used
 USE_CURL="${USE_CURL:="false"}"
-WWW_USER="${WWW_USER:="www-data"}"
-IS_DOCKER="${IS_DOCKER:="false"}"
-#Enter API key if an external server is being used
+WWW_USER="${WWW_USER:="barcodebuddy"}"
+IS_DOCKER="${IS_DOCKER:="true"}"
 API_KEY="${API_KEY:="YOUR_API_KEY"}"
-
-#Set a custom barcode below. If this barcode is scanned, specialAction() will be executed
 SPECIAL_BARCODE="${SPECIAL_BARCODE:="YOUR_CUSTOM_BARCODE"}"
+SCAN_TIMEOUT="${SCAN_TIMEOUT:="0.5"}"
+PHP_BIN="${PHP_BIN:="$(command -v php || echo /usr/bin/php)"}"
 
-#Change the function below to have a custom command executed when the custom barcode was scanned
 specialAction() {
     echo "Custom barcode scanned"
 }
-
-
-
-
 
 declare -A CODE_MAP_CHAR=( ["(KEY_0)"]="0" \
     ["(KEY_1)"]="1" \
@@ -88,72 +88,87 @@ declare -A CODE_MAP_CHAR=( ["(KEY_0)"]="0" \
     ["(KEY_ENTER)"]="KEY_ENTER" \
     ["(KEY_KPENTER)"]="KEY_ENTER" )
 
-
-
 declare NON_ALLOWED_CHAR="NONE";
 
-
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
    exit 1
 fi
 
 if [[ $IS_DOCKER == true ]]; then
    if [[ $(printenv ATTACH_BARCODESCANNER) != "true" ]]; then
-	echo "[ScannerConnection] Not starting service, as ATTACH_BARCODESCANNER has not been passed"
-	exit 0
+        echo "[ScannerConnection] Not starting service, as ATTACH_BARCODESCANNER has not been passed"
+        exit 0
    fi
 fi
 
 deviceToUse=""
-#If no arguments passed, we check if there is only one input device
-#(most likely the case for docker images)
-if [ $# -eq 0 ]; then
+if [ $# -ge 1 ] && [ -n "$1" ]; then
+    deviceToUse="$1"
+elif [ -n "$SCANNER_DEVICE" ]; then
+    deviceToUse="$SCANNER_DEVICE"
+else
     nInputEvents=$(ls 2>/dev/null -Ubad1 -- /dev/input/event* | wc -l)
-	if [ $nInputEvents = 1 ]; then
-	    deviceToUse=$(ls /dev/input/event* | head -n 1)
-	else
-	    echo "No argument provided and more than one device in /dev/input/"
-	    echo "Usage: grabInput.sh /dev/input/eventX"
-	    exit 1
-	fi
-else 
-	deviceToUse="$1"
+    if [ "$nInputEvents" = 1 ]; then
+        deviceToUse=$(ls /dev/input/event* | head -n 1)
+    else
+        echo "No argument provided and more than one device in /dev/input/"
+        echo "Usage: grabInput.sh /dev/input/eventX"
+        exit 1
+    fi
 fi
 
-
 returnAllowedCharacter() {
-  for key in  "${!CODE_MAP_CHAR[@]}"; do
-        if [[ $1 =~ "$key"  && $1 =~ "time" && $1 =~ "value 1" ]]; then
+  for key in "${!CODE_MAP_CHAR[@]}"; do
+        if [[ $1 =~ "$key" && $1 =~ "time" && $1 =~ "value 1" ]]; then
             echo "${CODE_MAP_CHAR[$key]}"
-	    return
+            return
         fi
     done
   echo "$NON_ALLOWED_CHAR"
 }
 
-
-
+submitScan() {
+  local code="$1"
+  echo "[ScannerConnection] Received: $code"
+  if [[ "$code" == "$SPECIAL_BARCODE" ]]; then
+    specialAction
+  else
+    if [[ $USE_CURL == false ]]; then
+        if command -v s6-setuidgid >/dev/null 2>&1; then
+            s6-setuidgid "$WWW_USER" "$PHP_BIN" "$SCRIPT_LOCATION" "$code" >/dev/null &
+        else
+            sudo -H -u "$WWW_USER" "$PHP_BIN" "$SCRIPT_LOCATION" "$code" >/dev/null &
+        fi
+    else
+        curl "${SERVER_ADDRESS}action/scan?apikey=${API_KEY}&add=${code}"
+    fi
+  fi
+}
 
 enteredText=""
-echo "[ScannerConnection] Waiting for scanner input"
-evtest --grab "$deviceToUse" | while read line; do
-  key="$(returnAllowedCharacter "{$line}")"
-  if [[ "$key" != "$NON_ALLOWED_CHAR" ]]; then
-    if [[ "$key" != "KEY_ENTER" ]]; then
-      enteredText+="$key"
-    else
-      echo "[ScannerConnection] Received: $enteredText"
-      if [[ "$enteredText" == "$SPECIAL_BARCODE" ]]; then
-        specialAction
+echo "[ScannerConnection] Waiting for scanner input ($deviceToUse)"
+evtest --grab "$deviceToUse" | while true; do
+  if IFS= read -r -t "$SCAN_TIMEOUT" line; then
+    key="$(returnAllowedCharacter "{$line}")"
+    if [[ "$key" != "$NON_ALLOWED_CHAR" ]]; then
+      if [[ "$key" != "KEY_ENTER" ]]; then
+        enteredText+="$key"
       else
-        if [[ $USE_CURL == false ]]; then
-            sudo -H -u "$WWW_USER" /usr/bin/php "$SCRIPT_LOCATION" "$enteredText" >/dev/null 2>&1 &
-        else
-            curl "${SERVER_ADDRESS}action/scan?apikey=${API_KEY}&add=${enteredText}"
-        fi
+        [[ -n "$enteredText" ]] && submitScan "$enteredText"
+        enteredText=""
       fi
-      enteredText=""
+    fi
+  else
+    rc=$?
+    if [ $rc -gt 128 ]; then
+      # Timeout: Scan ohne Enter-Suffix abschliessen
+      if [[ -n "$enteredText" ]]; then
+        submitScan "$enteredText"
+        enteredText=""
+      fi
+    else
+      break   # Ende der evtest-Ausgabe
     fi
   fi
 done

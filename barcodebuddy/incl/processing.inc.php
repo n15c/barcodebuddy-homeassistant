@@ -109,6 +109,9 @@ function processNewBarcode(string $barcodeInput, ?string $bestBeforeInDays = nul
     }
 
     $sanitizedBarcode = sanitizeString($barcode);
+    // Home-Assistant-Add-on: Screen-Seite zeigt "wird verarbeitet", bis das Ergebnis da ist
+    require_once __DIR__ . "/haAutoCreate.inc.php";
+    HaAutoCreate::progress("received", $sanitizedBarcode);
     $lockGenerator    = new LockGenerator();
     $lockGenerator->createLock();
     $productInfoFromBarcode = API::getProductByBarcode($sanitizedBarcode);
@@ -213,6 +216,11 @@ function processChoreBarcode(string $barcode) {
  * @throws DbConnectionDuringEstablishException
  */
 function processUnknownBarcode(string $barcode, bool $websocketEnabled, LockGenerator &$fileLock, ?string $bestBeforeInDays, ?string $price): string {
+    // Home-Assistant-Add-on: unbekannte Produkte aus Open Food Facts in Grocy anlegen
+    require_once __DIR__ . "/haAutoCreate.inc.php";
+    $haResult = HaAutoCreate::tryCreate($barcode, $websocketEnabled, $fileLock, $bestBeforeInDays, $price);
+    if ($haResult !== null)
+        return $haResult;
     $db     = DatabaseConnection::getInstance();
     $amount = 1;
     if ($db->getTransactionState() == STATE_PURCHASE) {

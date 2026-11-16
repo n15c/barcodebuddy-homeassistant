@@ -1,0 +1,8 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# Hintergrundjob von Barcode Buddy (Cache, Foederation, Produktbilder nachladen) alle 2 Minuten
+cd /app/bbuddy || exit 1
+while true; do
+    s6-setuidgid barcodebuddy php /app/bbuddy/cron.php > /dev/null
+    sleep 120
+done

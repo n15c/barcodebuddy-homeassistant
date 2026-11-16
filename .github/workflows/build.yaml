@@ -1,0 +1,79 @@
+name: Add-on bauen und testen
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+          - arch: aarch64
+            platform: linux/arm64
+          - arch: armv7
+            platform: linux/arm/v7
+          - arch: i386
+            platform: linux/386
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Basisimage aus build.yaml lesen
+        id: base
+        run: echo "from=$(yq '.build_from.${{ matrix.arch }}' build.yaml)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Image bauen
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.platform }}" \
+            --build-arg BUILD_FROM="${{ steps.base.outputs.from }}" \
+            --build-arg BUILD_ARCH="${{ matrix.arch }}" \
+            --build-arg BUILD_VERSION="$(yq '.version' config.yaml)" \
+            --load -t "bbuddy-addon:${{ matrix.arch }}" .
+
+      - name: Container starten und pruefen (amd64)
+        if: matrix.arch == 'amd64'
+        run: |
+          set -x
+          mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/config"
+          cp test/options.json "$RUNNER_TEMP/data/options.json"
+          docker run -d --name bbuddy -p 8621:80 -p 8099:8099 \
+            -v "$RUNNER_TEMP/data:/data" -v "$RUNNER_TEMP/config:/config" \
+            "bbuddy-addon:amd64"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8621/index.php || true)
+            [ "$code" = "302" ] || [ "$code" = "200" ] && break
+            sleep 2
+          done
+          docker logs bbuddy
+          # Ohne Grocy-Verbindung leitet Barcode Buddy auf die Einrichtung bzw. Anmeldung um
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8621/index.php)" = "302"
+          # Ingress-Port ist nur fuer den Home-Assistant-Supervisor freigegeben
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8099/index.php)" = "403"
+          # Interne Dateien werden nicht ausgeliefert
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8621/data/config.php)" = "403"
+          # Alle Dienste laufen
+          docker exec bbuddy sh -c 'pgrep -x nginx && pgrep -f php-fpm && pgrep -x redis-server && pgrep -f wsserver.php'
+          docker exec bbuddy redis-cli ping | grep -q PONG
+          # Daten- und Optionsdateien wurden angelegt
+          docker exec bbuddy test -f /etc/bbuddy-ha/options.json
+          docker exec bbuddy test -d /config/data
+          # Keine PHP-Fehler im Log
+          ! docker logs bbuddy 2>&1 | grep -E "PHP (Fatal|Parse) error"
+
+      - name: Logs bei Fehler
+        if: failure() && matrix.arch == 'amd64'
+        run: docker logs bbuddy || true

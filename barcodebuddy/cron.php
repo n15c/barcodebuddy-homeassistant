@@ -31,5 +31,9 @@ if ($config["USE_REDIS"]) {
 
 BarcodeFederation::doScheduledSyncBarcodes();
 
+// Home-Assistant-Add-on: Produktbilder nachladen, deren Download beim Scan fehlschlug
+require_once __DIR__ . "/incl/haAutoCreate.inc.php";
+HaAutoCreate::retryPendingPictures();
+
 if (isset($_GET["ajax"]))
     echo "OK";

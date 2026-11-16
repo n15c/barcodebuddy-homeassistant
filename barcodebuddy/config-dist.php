@@ -115,5 +115,5 @@ const OVERRIDDEN_USER_CONFIG       = array(
 
 
 // Currently not in use
-const IS_DOCKER                    = false;
+const IS_DOCKER                    = true;
 

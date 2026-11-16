@@ -1,0 +1,4 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+bashio::log.info "Starte nginx"
+exec nginx -c /etc/nginx/nginx.conf

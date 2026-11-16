@@ -366,15 +366,21 @@ class API {
              $data['best_before_date'] = self::formatBestBeforeDays((int)$daysBestBefore);
         }
         
+        // Home-Assistant-Add-on: Einlagerungsmodus (Lagerort + MHD-Abfrage)
+        require_once __DIR__ . "/haStorage.inc.php";
+        $data = HaStorage::beforePurchase($id, $data);
+
         $data_json                = json_encode($data);
         $url                      = API_STOCK . "/" . $id . "/add";
 
         $curl = new CurlGenerator($url, METHOD_POST, $data_json);
+        $haPurchaseResponse = null;
         try {
-            $curl->execute();
+            $haPurchaseResponse = $curl->execute();
         } catch (Exception $e) {
             self::processError($e, "Could not add product to inventory");
         }
+        HaStorage::afterPurchase($id, $haPurchaseResponse);
         if ($fileLock != null)
             $fileLock->removeLock();
         if (BBConfig::getInstance()["SHOPPINGLIST_REMOVE"]) {

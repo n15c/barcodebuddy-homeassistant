@@ -1,4 +1,4 @@
-# BarcodeBuddy Homeassistant Docker Image
+# Barcode Buddy für Home Assistant
 
 
 ![Supports aarch64 Architecture][aarch64-shield]
@@ -14,7 +14,12 @@
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
 
 
-This is the docker repo optimized for Home Assistant of [BarcodeBuddy](https://github.com/Forceu/barcodebuddy).
+Home-Assistant-Add-on für [Barcode Buddy](https://github.com/Forceu/barcodebuddy), erweitert um automatische
+Produktanlage aus Open Food Facts, Einlagern mit MHD-Abfrage und eine Touchscreen-Oberfläche.
+
+Der Quellcode von Barcode Buddy liegt in diesem Repository (Ordner [`barcodebuddy/`](barcodebuddy/)); alle
+Änderungen sind dort direkt eingebaut. Das Add-on baut sein Image selbst auf dem offiziellen
+Home-Assistant-Basisimage.
 
 ### Install Home Assistant
 
@@ -145,10 +150,42 @@ sie nicht von etwas anderem genutzt werden).
   <img src="https://contributors-img.web.app/image?repo=forceu/barcodebuddy-homeassistant" />
 </a>
 
-## License
-The MIT License (MIT)
+## Aufbau
 
-Based on: https://github.com/linuxserver/docker-grocy
+| Pfad | Inhalt |
+|---|---|
+| `barcodebuddy/` | Barcode Buddy 1.9.0.1 mit den Erweiterungen dieses Add-ons (als `git subtree` übernommen) |
+| `rootfs/` | Konfiguration im Container: nginx (direkter Port und Ingress), PHP-FPM, Redis, s6-Dienste |
+| `Dockerfile`, `build.yaml` | Image auf Basis von `ghcr.io/home-assistant/<arch>-base` (Alpine, s6-overlay, bashio), PHP 8.4 |
+| `config.yaml`, `translations/` | Add-on-Konfiguration und Optionstexte |
+| `.github/workflows/build.yaml` | Baut das Image bei jedem Pull Request für alle Architekturen und testet es auf amd64 |
+
+Im Container laufen als s6-Dienste: `nginx`, `php-fpm`, `redis`, `websocket` (Live-Anzeige der Screen-Seite),
+`cron` (Hintergrundjob alle 2 Minuten) und `grabber` (Barcodescanner am Host). Vorher bereitet `init-bbuddy`
+Datenordner, Optionen, Zeitzone und die Datenübernahme aus alten Versionen vor.
+
+Die Erweiterungen in `barcodebuddy/`:
+
+- `incl/haAutoCreate.inc.php`: Produkte aus Open Food Facts anlegen, Bilder nachladen, Fortschrittsmeldungen
+- `incl/haStorage.inc.php`, `ha_storage.php`, `incl/js/haStorage.js`: Einlagern, MHD-Abfrage, Mengenkorrektur
+- `screen.php`: neu gestaltete Screen-Seite
+- Einhängepunkte in `incl/processing.inc.php`, `incl/api.inc.php` und `cron.php`; Add-on-Optionen in
+  `incl/configProcessing.inc.php`; Scanner-Skript `example/grabInput.sh`
+
+### Neue Barcode-Buddy-Version übernehmen
+
+```sh
+git subtree pull --prefix=barcodebuddy https://github.com/Forceu/barcodebuddy.git <tag> --squash
+```
+
+Konflikte mit den eigenen Änderungen zeigt Git dabei wie bei einem normalen Merge an.
+
+## License
+
+- `barcodebuddy/`: Barcode Buddy von Marc Ole Bulling, [AGPL-3.0](barcodebuddy/LICENSE.md). Die Änderungen
+  dieses Add-ons in diesem Ordner stehen ebenfalls unter der AGPL-3.0; der Quellcode ist in der Fußzeile der
+  Weboberfläche verlinkt.
+- Alle übrigen Dateien: MIT (siehe [LICENSE](LICENSE)).
 
 ## Donations
 
