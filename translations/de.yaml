@@ -35,5 +35,29 @@ configuration:
       Scanner-Geräts. Währenddessen einen Barcode scannen, um zu prüfen, ob das
       richtige Gerät gewählt ist. Achtung: Bei einer Tastatur landen auch
       eingegebene Texte im Log, daher nur kurz zur Fehlersuche aktivieren.
+  auto_create_products:
+    name: Unbekannte Produkte automatisch anlegen
+    description: >-
+      Unbekannte Barcodes werden bei Open Food Facts nachgeschlagen und direkt als
+      Produkt in Grocy angelegt – mit Name, Bild, Marke, Menge, Zutaten, Allergenen,
+      Nährwerten und Energie. Danach wird der Scan normal verbucht (z.B. Einkauf).
+      Wird nichts gefunden, landet der Barcode wie bisher in der Liste der unbekannten Barcodes.
+  auto_create_location:
+    name: Lagerort für neue Produkte
+    description: >-
+      Name eines Lagerorts in Grocy (z.B. „Vorratsschrank“). Leer lassen, um die
+      Grocy-Voreinstellung für neue Produkte bzw. den ersten Lagerort zu verwenden.
+      Kann pro Produkt später in Grocy geändert werden.
+  auto_create_quantity_unit:
+    name: Mengeneinheit für neue Produkte
+    description: >-
+      Name einer Mengeneinheit in Grocy (z.B. „Stück“ oder „Packung“). Leer lassen,
+      um die Grocy-Voreinstellung für neue Produkte bzw. die erste Mengeneinheit zu
+      verwenden. Kann pro Produkt später in Grocy geändert werden.
+  product_language:
+    name: Sprache der Produktdaten
+    description: >-
+      Zweistelliger Sprachcode (z.B. de, en, fr) für Produktnamen und Zutaten von
+      Open Food Facts sowie für die Beschriftungen in der Produktbeschreibung.
 network:
   80/tcp: Weboberfläche (direkter Zugriff, z.B. für die API und Scanner-Apps)

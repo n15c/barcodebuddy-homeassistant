@@ -1,6 +1,6 @@
 ---
 name: Barcode Buddy for Grocy
-version: 0.5.0
+version: 0.6.0
 slug: bbuddy-grocy
 description: Barcode system for Grocy
 url: https://github.com/Forceu/barcodebuddy
@@ -36,6 +36,10 @@ options:
   ATTACH_BARCODESCANNER: false
   SCANNER_DEVICE: ""
   SCANNER_DEBUG: false
+  auto_create_products: true
+  auto_create_location: ""
+  auto_create_quantity_unit: ""
+  product_language: de
 schema:
   disable_auth: bool
   debug: bool
@@ -44,3 +48,7 @@ schema:
   ATTACH_BARCODESCANNER: bool
   SCANNER_DEVICE: "device(subsystem=input)?"
   SCANNER_DEBUG: "bool?"
+  auto_create_products: bool
+  auto_create_location: "str?"
+  auto_create_quantity_unit: "str?"
+  product_language: "match(^[a-z]{2}$)"

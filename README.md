@@ -32,6 +32,36 @@ Der direkte Port (Standard `8621`) bleibt bestehen, z.B. für die API und Scanne
 Wer ihn nicht braucht, kann ihn in der Add-on-Konfiguration unter *Netzwerk* leeren.
 Für den direkten Port gelten weiterhin die BarcodeBuddy-Anmeldung und die Option `disable_auth`.
 
+### Unbekannte Produkte automatisch anlegen
+
+Wird ein Barcode gescannt, den Grocy noch nicht kennt, schlägt das Add-on ihn bei
+[Open Food Facts](https://world.openfoodfacts.org) nach und legt das Produkt direkt in Grocy an.
+Anschließend wird der Scan ganz normal verbucht (z.B. als Einkauf).
+
+Übernommen werden:
+
+- Name (in der eingestellten Sprache; ist der Name in Grocy schon vergeben, wird die Marke bzw. der Barcode ergänzt)
+- Produktbild
+- Barcode
+- Beschreibung mit Marke, Menge, Portionsgröße, Nutri-Score, NOVA-Gruppe, Zutaten, Allergenen, Spuren und Nährwerttabelle
+- Energie (kcal pro Packung)
+- Produktgruppe, wenn eine Grocy-Produktgruppe genauso heißt wie eine Open-Food-Facts-Kategorie
+- Grocy-Voreinstellungen für neue Produkte (Mindesthaltbarkeit in Tagen, „Geöffnet als nicht vorrätig behandeln“)
+
+**Mengeneinheit und Lagerort** kommen aus den Optionen `auto_create_quantity_unit` und
+`auto_create_location` (Namen wie in Grocy, z.B. „Packung“ und „Vorratsschrank“). Sind sie leer,
+gelten die Grocy-Voreinstellungen für neue Produkte (*Grocy → Einstellungen → Produkte*) oder der jeweils
+erste Eintrag. Beides lässt sich später pro Produkt in Grocy ändern; das BarcodeBuddy-Protokoll nennt
+bei jedem angelegten Produkt die verwendeten Werte.
+
+Findet Open Food Facts nichts oder schlägt das Anlegen fehl, landet der Barcode wie bisher in der Liste
+der unbekannten Barcodes. Barcodes, die dort schon stehen, werden nicht automatisch angelegt.
+Abschalten lässt sich die Funktion mit `auto_create_products: false`.
+
+Hinweis: Die Energie wird pro Packung eingetragen, weil Grocy sie pro Bestandsmengeneinheit erwartet.
+Wer als Mengeneinheit z.B. Gramm verwendet, sollte den Wert in Grocy anpassen. Die Daten von
+Open Food Facts stehen unter der [ODbL-Lizenz](https://opendatacommons.org/licenses/odbl/1-0/).
+
 ### Barcodescanner / Tastatur anbinden
 
 In der Add-on-Konfiguration:

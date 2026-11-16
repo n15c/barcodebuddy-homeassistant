@@ -10,6 +10,9 @@ opt() {
 }
 
 if [ -f "$OPTIONS" ]; then
+  # Optionen fuer die BarcodeBuddy-Erweiterung (automatische Produktanlage) fuer PHP lesbar ablegen
+  mkdir -p /etc/bbuddy-ha && cp "$OPTIONS" /etc/bbuddy-ha/options.json && chmod 644 /etc/bbuddy-ha/options.json
+
   # Allgemeine Add-on-Optionen an BarcodeBuddy weiterreichen. BBUDDY_*-Variablen
   # schreibt der Supervisor als fastcgi_param in die Konfiguration des direkten Ports.
   # (Beim Ingress-Zugang ist die Anmeldung immer aus, das uebernimmt Home Assistant.)

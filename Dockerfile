@@ -18,5 +18,14 @@ LABEL \
 # Home-Assistant-Optionen -> Umgebungsvariablen (ATTACH_BARCODESCANNER, SCANNER_DEVICE)
 COPY rootfs /
 RUN chmod +x /usr/local/bin/ha-entrypoint.sh /usr/local/share/ha-grabInput.sh
+
+# Erweiterung: unbekannte Produkte automatisch aus Open Food Facts in Grocy anlegen
+COPY bbuddy/ /app/bbuddy/
+COPY build/patch-bbuddy.php /tmp/patch-bbuddy.php
+RUN [ -x /usr/bin/php ] || ln -s /usr/bin/php8 /usr/bin/php; \
+    php /tmp/patch-bbuddy.php \
+ && php -l /app/bbuddy/incl/processing.inc.php \
+ && php -l /app/bbuddy/incl/haAutoCreate.inc.php \
+ && rm /tmp/patch-bbuddy.php
 ENTRYPOINT ["/usr/local/bin/ha-entrypoint.sh"]
 CMD []
