@@ -65,9 +65,9 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8099/index.php)" = "403"
           # Interne Dateien werden nicht ausgeliefert
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8621/data/config.php)" = "403"
-          # Alle Dienste laufen
-          docker exec bbuddy sh -c 'pgrep -x nginx && pgrep -f php-fpm && pgrep -x redis-server && pgrep -f wsserver.php'
+          # Dienste antworten (nginx und PHP-FPM sind durch die Anfragen oben bereits geprueft)
           docker exec bbuddy redis-cli ping | grep -q PONG
+          docker exec bbuddy php -r 'exit(@fsockopen("127.0.0.1", 47631) ? 0 : 1);'
           # Daten- und Optionsdateien wurden angelegt
           docker exec bbuddy test -f /etc/bbuddy-ha/options.json
           docker exec bbuddy test -d /config/data
