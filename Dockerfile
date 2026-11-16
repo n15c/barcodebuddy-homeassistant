@@ -37,6 +37,7 @@ RUN [ -x /usr/bin/php ] || ln -s /usr/bin/php8 /usr/bin/php; \
  && php -l /app/bbuddy/incl/haStorage.inc.php \
  && php -l /app/bbuddy/ha_storage.php \
  && php -l /app/bbuddy/screen.php \
+ && php -l /app/bbuddy/cron.php \
  && rm /tmp/patch-bbuddy.php
 ENTRYPOINT ["/usr/local/bin/ha-entrypoint.sh"]
 CMD []

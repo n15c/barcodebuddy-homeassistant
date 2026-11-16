@@ -54,6 +54,11 @@ gelten die Grocy-Voreinstellungen für neue Produkte (*Grocy → Einstellungen �
 erste Eintrag. Beides lässt sich später pro Produkt in Grocy ändern; das BarcodeBuddy-Protokoll nennt
 bei jedem angelegten Produkt die verwendeten Werte.
 
+Ist der Bildserver von Open Food Facts beim Scan nicht erreichbar, wird das Produkt trotzdem angelegt und das
+Bild im Hintergrund nachgeladen (nach 2 min, 10 min, 30 min, 2 h, 6 h und 24 h). Das Protokoll meldet, wenn
+das Bild nachgeladen wurde oder endgültig nicht geladen werden konnte. Hat das Produkt inzwischen ein Bild,
+wird es nicht überschrieben.
+
 Findet Open Food Facts nichts oder schlägt das Anlegen fehl, landet der Barcode wie bisher in der Liste
 der unbekannten Barcodes. Barcodes, die dort schon stehen, werden nicht automatisch angelegt.
 Abschalten lässt sich die Funktion mit `auto_create_products: false`.

@@ -55,7 +55,21 @@ PHP,
         HaStorage::afterPurchase($id, $haPurchaseResponse);
 PHP
     ),
-    // 3. Screen-Seite: Menuepunkt "Einlagern" und Oberflaeche
+    // 3. Hintergrundjob (alle 2 Minuten): fehlgeschlagene Produktbilder nachladen
+    array(
+        "file"   => "cron.php",
+        "marker" => "HaAutoCreate::retryPendingPictures",
+        "search" => 'if (isset($_GET["ajax"]))',
+        "insert" => "before",
+        "code"   => <<<'PHP'
+// Home-Assistant-Add-on: Produktbilder nachladen, deren Download beim Scan fehlschlug
+require_once __DIR__ . "/incl/haAutoCreate.inc.php";
+HaAutoCreate::retryPendingPictures();
+
+
+PHP
+    ),
+    // 4. Screen-Seite: Menuepunkt "Einlagern" und Oberflaeche (entfaellt mit der eigenen screen.php)
     array(
         "file"   => "screen.php",
         "marker" => "ha-storage-menu",
