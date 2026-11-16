@@ -28,6 +28,8 @@
             noYear: "Jahr ergänzt",
             past: "liegt in der Vergangenheit",
             clear: "Löschen",
+            backspace: "Zeichen löschen",
+            busyScan: "Weiterer Scan wird verarbeitet …",
             weekdays: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
             quickTitle: "oder schnell wählen",
             save: "Speichern",
@@ -56,6 +58,8 @@
             noYear: "year added",
             past: "is in the past",
             clear: "Clear",
+            backspace: "Delete character",
+            busyScan: "Processing another scan …",
             weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
             quickTitle: "or pick quickly",
             save: "Save",
@@ -90,6 +94,26 @@
             if (child) node.appendChild(child);
         });
         return node;
+    }
+
+    // Icons als eingebettete Vektorgrafik (Material Icons, Apache License 2.0): keine Schriftzeichen
+    // oder Emojis, die auf manchen Geraeten fehlen, und nichts, was nachgeladen werden muss
+    var ICONS = {
+        fridge: "M18 2.01L6 2c-1.1 0-2 .89-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.11-.9-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h2v3H8zm0 7h2v5H8z",
+        close: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+        backspace: "M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"
+    };
+    var SVG_NS = "http://www.w3.org/2000/svg"; // XML-Namensraum, wird nicht geladen
+
+    function icon(name) {
+        var svg = document.createElementNS(SVG_NS, "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("aria-hidden", "true");
+        svg.setAttribute("class", "ha-icon");
+        var path = document.createElementNS(SVG_NS, "path");
+        path.setAttribute("d", ICONS[name]);
+        svg.appendChild(path);
+        return svg;
     }
 
     function request(method, action, body) {
@@ -278,6 +302,13 @@
         ".ha-actions .ha-skip{background:#eee;color:#333}" +
         ".ha-loc{display:block;width:100%;margin:8px 0;font-size:1.5em}" +
         ".ha-more{margin-top:10px;color:#666}" +
+        ".ha-icon{width:1.2em;height:1.2em;fill:currentColor;vertical-align:middle;flex:none}" +
+        "#ha-banner .ha-banner-text{display:flex;align-items:center;gap:10px}#ha-banner .ha-icon{width:1.3em;height:1.3em}" +
+        ".ha-clear .ha-icon{width:24px;height:24px;vertical-align:-6px}.ha-keys .ha-icon{width:1.05em;height:1.05em}" +
+        ".ha-busy{display:none;align-items:center;justify-content:center;gap:10px;margin-top:10px;color:#2563eb;font-weight:600}" +
+        ".ha-busy.ha-on{display:flex}" +
+        ".ha-spin{width:18px;height:18px;border-radius:50%;border:3px solid rgba(37,99,235,.25);border-top-color:#2563eb;animation:ha-spin .9s linear infinite}" +
+        "@keyframes ha-spin{to{transform:rotate(360deg)}}" +
         ".ha-error{color:#c62828;margin-top:8px;min-height:1.2em}" +
         ".ha-box{border-radius:20px}" +
         "@media (prefers-color-scheme: dark){.ha-box,.ha-actions{background:#111827;color:#f3f4f6}.ha-box h2,.ha-sub,.ha-quick-title,.ha-more{color:#9ca3af}" +
@@ -299,7 +330,8 @@
         }
         banner.innerHTML = "";
         var open = state.pending.length ? " · " + state.pending.length + " " + t("open") : "";
-        banner.appendChild(el("span", {text: "📦 " + t("storing") + ": " + session.location_name + open}));
+        banner.appendChild(el("span", {"class": "ha-banner-text"}, [icon("fridge"),
+            document.createTextNode(t("storing") + ": " + session.location_name + open)]));
         banner.appendChild(el("button", {text: t("stop"), onclick: stopSession}));
         banner.style.display = "flex";
         if (banner.classList.contains("ha-fixed"))
@@ -366,10 +398,10 @@
         var display = el("div", {"class": "ha-display ha-empty"});
         var displayText = el("span", {text: t("placeholder")});
         display.appendChild(displayText);
-        display.appendChild(el("button", {"class": "ha-clear", "aria-label": t("clear"), title: t("clear"), text: "×", onclick: function () {
+        display.appendChild(el("button", {"class": "ha-clear", "aria-label": t("clear"), title: t("clear"), onclick: function () {
             typed = "";
             update();
-        }}));
+        }}, [icon("close")]));
         var preview = el("div", {"class": "ha-preview ha-neutral", text: t("hint")});
         var error = el("div", {"class": "ha-error"});
         var saveButton;
@@ -438,14 +470,15 @@
         // Ziffernblock auf dem Bildschirm
         var keys = el("div", {"class": "ha-keys"});
         ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "back"].forEach(function (key) {
-            keys.appendChild(el("button", {
+            var attrs = {
                 "class": key === "." || key === "back" ? "ha-key-fn" : "",
-                "aria-label": key === "back" ? "⌫" : key,
-                text: key === "back" ? "⌫" : key,
+                "aria-label": key === "back" ? t("backspace") : key,
                 onclick: function () {
                     press(key);
                 }
-            }));
+            };
+            if (key !== "back") attrs.text = key;
+            keys.appendChild(el("button", attrs, key === "back" ? [icon("backspace")] : []));
         });
 
         // Angeschlossene Tastatur funktioniert ebenfalls
@@ -509,7 +542,8 @@
                 })
             ]),
             error,
-            state.pending.length > 1 ? el("div", {"class": "ha-more", text: (state.pending.length - 1) + " " + t("more")}) : null
+            el("div", {"class": "ha-busy" + (scanBusy ? " ha-on" : "")}, [el("span", {"class": "ha-spin"}), el("span", {text: t("busyScan")})]),
+            el("div", {"class": "ha-more", text: state.pending.length > 1 ? (state.pending.length - 1) + " " + t("more") : ""})
         ]);
 
         dialog = el("div", {"class": "ha-modal"}, [box]);
@@ -522,9 +556,51 @@
 
     // ------------------------------------------------------------------ Abgleich
 
+    // ------------------------------------------------------------------ Rueckmeldung waehrend der Verarbeitung
+    // Die Screen-Seite meldet "Scan wird verarbeitet" und "Ergebnis da". Danach wird ein paar Sekunden
+    // schnell nachgefragt, weil die MHD-Abfrage erst entsteht, wenn Grocy den Einkauf gebucht hat.
+    var scanBusy = false, busyTimer = null, fastUntil = 0, fastTimer = null, lastPendingCount = 0;
+
+    function setScanBusy(on) {
+        scanBusy = on;
+        clearTimeout(busyTimer);
+        if (on) busyTimer = setTimeout(function () { setScanBusy(false); }, 45000);
+        var line = dialog && dialog.querySelector(".ha-busy");
+        if (line) line.classList.toggle("ha-on", on);
+    }
+
+    function fastPoll() {
+        clearTimeout(fastTimer);
+        if (Date.now() >= fastUntil) {
+            setScanBusy(false);
+            return;
+        }
+        fastTimer = setTimeout(function () {
+            refresh().then(fastPoll);
+        }, 350);
+    }
+
+    window.haStorageActive = function () {
+        return !!(state && state.session);
+    };
+    window.haStorageProgress = function () {
+        if (state && state.session) setScanBusy(true);
+    };
+    window.haStorageAfterScan = function () {
+        if (!state || !state.session) return;
+        fastUntil = Date.now() + 6000;
+        fastPoll();
+    };
+
     function refresh() {
         return request("GET", "state").then(function (data) {
             state = data;
+            if (data.pending.length > lastPendingCount) {
+                // Neue MHD-Abfrage ist da: schnelles Nachfragen und Hinweis beenden
+                fastUntil = 0;
+                setScanBusy(false);
+            }
+            lastPendingCount = data.pending.length;
             if (data.lang && T[data.lang]) lang = data.lang;
             else if (data.lang) lang = "en";
             renderBanner();
@@ -535,7 +611,7 @@
                 showDialog(next);
             } else if (dialog) {
                 var more = dialog.querySelector(".ha-more");
-                if (more) more.textContent = (data.pending.length - 1) + " " + t("more");
+                if (more) more.textContent = data.pending.length > 1 ? (data.pending.length - 1) + " " + t("more") : "";
             }
         }).catch(function () {
             // Verbindungsfehler: beim naechsten Durchlauf erneut versuchen

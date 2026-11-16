@@ -21,6 +21,19 @@ $patches = array(
         return $haResult;
 PHP
     ),
+    // 1b. Sofortige Rueckmeldung an die Screen-Seite, sobald ein Barcode verarbeitet wird
+    array(
+        "file"   => "incl/processing.inc.php",
+        "marker" => 'HaAutoCreate::progress("received"',
+        "search" => '    $sanitizedBarcode = sanitizeString($barcode);',
+        "insert" => "after",
+        "code"   => <<<'PHP'
+
+    // Home-Assistant-Add-on: Screen-Seite zeigt "wird verarbeitet", bis das Ergebnis da ist
+    require_once __DIR__ . "/haAutoCreate.inc.php";
+    HaAutoCreate::progress("received", $sanitizedBarcode);
+PHP
+    ),
     // 2. Einlagerungsmodus: Lagerort setzen und Einkauf fuer die MHD-Abfrage vormerken
     array(
         "file"    => "incl/api.inc.php",

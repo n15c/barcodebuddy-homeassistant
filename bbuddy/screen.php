@@ -28,7 +28,7 @@ $icons = array(
     "all"      => "M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z",
     "quantity" => "M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z",
     "store"    => "M18 2.01L6 2c-1.1 0-2 .89-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.11-.9-1.99-2-1.99zM18 20H6v-9.02h12V20zm0-11H6V4h12v5zM8 5h2v3H8zm0 7h2v5H8z",
-    "back"     => "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
+    "backspace" => "M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z",
     "soundOff" => "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z",
     "soundOn"  => "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z",
     "full"     => "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z",
@@ -51,9 +51,14 @@ $T = array(
         "error" => "Verbindungsfehler", "history" => "Letzte Scans", "historyEmpty" => "Noch keine Scans",
         "connected" => "Verbunden", "connecting" => "Verbinde …", "unavailable" => "Nicht erreichbar",
         "noSse" => "Dieser Browser unterstützt keine Live-Anzeige (Server-Sent Events).",
-        "sound" => "Ton & Bildschirm wach halten", "fullscreen" => "Vollbild", "back" => "Zurück",
+        "sound" => "Ton & Bildschirm wach halten", "fullscreen" => "Vollbild", "delete" => "Löschen",
+        "busy" => "Wird verarbeitet …", "bbFollows" => "MHD-Abfrage folgt …", "noAnswer" => "Keine Rückmeldung erhalten – bitte im Protokoll nachsehen",
+        "steps" => array("received" => "Barcode empfangen", "lookup" => "Suche bei Open Food Facts …",
+            "create" => "Lege Produkt in Grocy an …", "picture" => "Lade Produktbild …"),
         "store" => "Einlagern …", "quantity" => "Menge",
-        "qtyTitle" => "Menge ändern", "qtyHint" => "Gilt für den zuletzt gescannten Barcode", "cancel" => "Abbrechen", "ok" => "Übernehmen",
+        "qtyTitle" => "Menge korrigieren", "qtyFor" => "Zuletzt eingekauft: %s (bisher %s)", "qtyLoading" => "Lade letzten Einkauf …",
+        "qtyNone" => "In den letzten 30 Minuten wurde nichts eingekauft. Erst den Artikel im Modus „Kaufen“ scannen, dann hier die Menge korrigieren.",
+        "cancel" => "Abbrechen", "ok" => "Übernehmen",
         "act" => array("purchase" => "Eingekauft", "consume" => "Verbraucht", "consumeAll" => "Alles verbraucht",
             "spoiled" => "Als verdorben gebucht", "open" => "Geöffnet", "stock" => "Bestand", "shopping" => "Auf die Einkaufsliste",
             "noStock" => "Nicht vorrätig", "weight" => "Gewicht eingeben", "quantity" => "Menge geändert", "mode" => "Modus",
@@ -67,9 +72,14 @@ $T = array(
         "error" => "Connection error", "history" => "Recent scans", "historyEmpty" => "No scans yet",
         "connected" => "Connected", "connecting" => "Connecting …", "unavailable" => "Unavailable",
         "noSse" => "This browser does not support live updates (server-sent events).",
-        "sound" => "Sound & keep screen on", "fullscreen" => "Fullscreen", "back" => "Back",
+        "sound" => "Sound & keep screen on", "fullscreen" => "Fullscreen", "delete" => "Delete",
+        "busy" => "Processing …", "bbFollows" => "Best-before prompt follows …", "noAnswer" => "No response received – please check the log",
+        "steps" => array("received" => "Barcode received", "lookup" => "Looking up Open Food Facts …",
+            "create" => "Creating product in Grocy …", "picture" => "Loading product picture …"),
         "store" => "Store items …", "quantity" => "Quantity",
-        "qtyTitle" => "Change quantity", "qtyHint" => "Applies to the last scanned barcode", "cancel" => "Cancel", "ok" => "Apply",
+        "qtyTitle" => "Correct quantity", "qtyFor" => "Last purchase: %s (so far %s)", "qtyLoading" => "Loading last purchase …",
+        "qtyNone" => "Nothing was purchased in the last 30 minutes. Scan the item in “Purchase” mode first, then correct the quantity here.",
+        "cancel" => "Cancel", "ok" => "Apply",
         "act" => array("purchase" => "Purchased", "consume" => "Consumed", "consumeAll" => "Consumed all",
             "spoiled" => "Consumed as spoiled", "open" => "Opened", "stock" => "In stock", "shopping" => "Added to shopping list",
             "noStock" => "Not in stock", "weight" => "Enter weight", "quantity" => "Quantity changed", "mode" => "Mode",
@@ -94,7 +104,6 @@ $modes = array(
 $jsConfig = array(
     "lang"          => $lang,
     "t"             => $t,
-    "barcodeQ"      => (string)$config["BARCODE_Q"],
     "fullscreenCfg" => (bool)$config["WS_FULLSCREEN"],
     "icons"         => array("ok" => $icons["ok"], "lookup" => $icons["lookup"], "unknown" => $icons["unknown"],
         "error" => $icons["error"], "scan" => $icons["scan"], "soundOn" => $icons["soundOn"], "soundOff" => $icons["soundOff"]),
@@ -185,6 +194,12 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         .result[data-state="lookup"] { background: var(--lookup-bg); color: var(--lookup-fg); }
         .result[data-state="unknown"] { background: var(--unknown-bg); color: var(--unknown-fg); }
         .result[data-state="error"] { background: var(--error-bg); color: var(--error-fg); }
+        .result[data-state="busy"] { background: var(--surface-2); }
+        .result[data-state="busy"] .big { display: none; }
+        .spinner { display: none; width: 96px; height: 96px; border-radius: 50%; border: 9px solid rgba(37,99,235,.18); border-top-color: var(--blue); animation: spin .9s linear infinite; }
+        .result[data-state="busy"] .spinner { display: block; }
+        .result[data-state="busy"] .result-hint { color: var(--blue); font-weight: 600; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .result.pop { animation: pop .35s ease-out; }
         .result-text.pre { white-space: pre-wrap; font-size: 1.1rem; font-weight: 600; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.06); opacity: .9; } }
@@ -239,7 +254,7 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
             .tile .icon { width: 1.8em; height: 1.8em; }
             .tile.store { font-size: 1.1rem; min-height: 64px; }
             .result { min-height: 220px; }
-            .result .big { width: 72px; height: 72px; }
+            .result .big, .spinner { width: 72px; height: 72px; }
         }
 
         /* Mengen-Dialog */
@@ -255,11 +270,13 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         .sheet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
         .sheet-actions button { font-size: 1.15rem; }
         .sheet-actions .primary { background: var(--green); color: #fff; }
+        .sheet-actions .primary:disabled { opacity: .45; }
+        .qty-error { color: var(--red); min-height: 1.3em; margin-top: 10px; font-weight: 600; }
+        .keypad .icon { width: 1.3em; height: 1.3em; vertical-align: middle; }
     </style>
 </head>
 <body>
 <header class="topbar">
-    <button class="icon-btn" id="btn-back" title="<?php echo htmlspecialchars($t["back"]) ?>" aria-label="<?php echo htmlspecialchars($t["back"]) ?>"><?php echo haIcon("back") ?></button>
     <div class="mode-chip" id="mode-chip"><?php echo haIcon("scan") ?><span id="mode">…</span></div>
     <div class="spacer"></div>
     <span class="conn" id="conn"><i></i><span id="conn-text"><?php echo htmlspecialchars($t["connecting"]) ?></span></span>
@@ -271,6 +288,7 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
 <main class="main">
     <section class="card result" id="result" data-state="idle" aria-live="polite">
         <svg class="big" viewBox="0 0 24 24" aria-hidden="true"><path id="result-icon" d="<?php echo $icons["scan"] ?>"/></svg>
+        <div class="spinner" aria-hidden="true"></div>
         <div class="result-title" id="result-title"><?php echo htmlspecialchars($t["ready"]) ?></div>
         <div class="result-text" id="result-text"></div>
         <div class="result-hint" id="result-hint"><?php echo htmlspecialchars($t["readyHint"]) ?></div>
@@ -288,26 +306,25 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
             continue; ?>
         <button class="tile c-<?php echo $mode[3] ?>" data-mode="<?php echo htmlspecialchars($mode[0]) ?>" data-barcode="<?php echo htmlspecialchars((string)$mode[1]) ?>"><?php echo haIcon($mode[2]) ?><span><?php echo htmlspecialchars($t["modes"][$mode[0]]) ?></span></button>
     <?php } ?>
-    <?php if ((string)$config["BARCODE_Q"] !== "") { ?>
-        <button class="tile c-gray" id="btn-qty"><?php echo haIcon("quantity") ?><span><?php echo htmlspecialchars($t["quantity"]) ?></span></button>
-    <?php } ?>
+    <button class="tile c-gray" id="btn-qty"><?php echo haIcon("quantity") ?><span><?php echo htmlspecialchars($t["quantity"]) ?></span></button>
 </nav>
 
 <div class="sheet" id="qty-sheet" role="dialog" aria-modal="true" aria-labelledby="qty-title">
     <div class="sheet-box">
         <h2 id="qty-title"><?php echo htmlspecialchars($t["qtyTitle"]) ?></h2>
-        <p><?php echo htmlspecialchars($t["qtyHint"]) ?></p>
+        <p id="qty-hint"></p>
         <div class="qty-display" id="qty-display">1</div>
         <div class="keypad" id="keypad">
             <button>1</button><button>2</button><button>3</button>
             <button>4</button><button>5</button><button>6</button>
             <button>7</button><button>8</button><button>9</button>
-            <button data-key=".">,</button><button>0</button><button data-key="back" aria-label="⌫">⌫</button>
+            <button data-key=".">,</button><button>0</button><button data-key="back" aria-label="<?php echo htmlspecialchars($t["delete"]) ?>"><?php echo haIcon("backspace") ?></button>
         </div>
         <div class="sheet-actions">
             <button id="qty-cancel"><?php echo htmlspecialchars($t["cancel"]) ?></button>
             <button class="primary" id="qty-ok"><?php echo htmlspecialchars($t["ok"]) ?></button>
         </div>
+        <div class="qty-error" id="qty-error" role="alert"></div>
     </div>
 </div>
 
@@ -348,17 +365,32 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         });
 
         // ------------------------------------------------------------ Mengen-Tastatur
-        var qty = "1", qtyFresh = true;
-        function renderQty() { $("qty-display").textContent = (qty || "0").replace(".", BB.lang === "de" ? "," : "."); }
-        if ($("btn-qty")) {
-            $("btn-qty").addEventListener("click", function () {
-                qty = "1"; qtyFresh = true; renderQty(); $("qty-sheet").classList.add("open");
-            });
-        }
+        // Korrigiert die Menge des zuletzt gebuchten Einkaufs in Grocy (z.B. 1 gescannt, 6 gekauft).
+        var qty = "1", qtyFresh = true, qtyLast = null, qtyBusy = false;
+        function fmtAmount(value) { return String(value).replace(".", BB.lang === "de" ? "," : "."); }
+        function renderQty() { $("qty-display").textContent = fmtAmount(qty || "0"); }
+        function closeQty() { $("qty-sheet").classList.remove("open"); }
+        $("btn-qty").addEventListener("click", function () {
+            qty = "1"; qtyFresh = true; qtyLast = null; renderQty();
+            $("qty-error").textContent = "";
+            $("qty-hint").textContent = t.qtyLoading;
+            $("qty-ok").disabled = true;
+            $("qty-sheet").classList.add("open");
+            fetch("./ha_storage.php?action=state", {credentials: "same-origin"}).then(function (r) { return r.json(); }).then(function (data) {
+                qtyLast = data.last_purchase || null;
+                if (qtyLast) {
+                    $("qty-hint").textContent = t.qtyFor.replace("%s", qtyLast.name).replace("%s", fmtAmount(qtyLast.amount));
+                    qty = String(qtyLast.amount); renderQty();
+                    $("qty-ok").disabled = false;
+                } else {
+                    $("qty-hint").textContent = t.qtyNone;
+                }
+            }).catch(function () { $("qty-hint").textContent = t.qtyNone; });
+        });
         $("keypad").addEventListener("click", function (event) {
             var button = event.target.closest("button");
             if (!button) return;
-            var key = button.getAttribute("data-key") || button.textContent;
+            var key = button.getAttribute("data-key") || button.textContent.trim();
             if (key === "back") qty = qty.slice(0, -1);
             else if (key === ".") { if (qtyFresh) qty = "0"; if (qty.indexOf(".") < 0) qty += "."; }
             else qty = (qtyFresh || qty === "0") ? key : qty + key;
@@ -366,15 +398,29 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
             if (qty.length > 7) qty = qty.slice(0, 7);
             renderQty();
         });
-        $("qty-cancel").addEventListener("click", function () { $("qty-sheet").classList.remove("open"); });
+        $("qty-cancel").addEventListener("click", closeQty);
         $("qty-ok").addEventListener("click", function () {
             var value = parseFloat(qty);
-            if (value > 0) sendBarcode(BB.barcodeQ + value);
-            $("qty-sheet").classList.remove("open");
+            if (!qtyLast || !(value > 0) || qtyBusy) return;
+            qtyBusy = true;
+            $("qty-error").textContent = "";
+            fetch("./ha_storage.php?action=quantity", {
+                method: "POST", credentials: "same-origin",
+                headers: {"Content-Type": "application/json"}, body: JSON.stringify({amount: value})
+            }).then(function (r) {
+                return r.json().then(function (data) { if (!r.ok) throw new Error(data.error || ("HTTP " + r.status)); return data; });
+            }).then(function (data) {
+                qtyBusy = false;
+                closeQty();
+                showResult("ok", A.quantity, data.name, "beep_success", fmtAmount(data.before) + " → " + fmtAmount(data.amount));
+                if (typeof window.haStorageAfterScan === "function") window.haStorageAfterScan();
+            }).catch(function (e) {
+                qtyBusy = false;
+                $("qty-error").textContent = e.message;
+            });
         });
 
         // ------------------------------------------------------------ Kopfzeile
-        $("btn-back").addEventListener("click", function () { window.location.href = "./index.php"; });
 
         var noSleep = typeof NoSleep !== "undefined" ? new NoSleep() : null;
         var soundOn = false;
@@ -483,6 +529,30 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
             resetTimer = setTimeout(showIdle, 4000);
         }
 
+        /** Barcode wird im Hintergrund verarbeitet: Spinner und aktueller Schritt bis zum Ergebnis */
+        function showBusy(step, code) {
+            var result = $("result");
+            result.setAttribute("data-state", "busy");
+            $("result-title").textContent = t.busy;
+            $("result-text").textContent = code;
+            $("result-text").classList.remove("pre");
+            $("result-hint").textContent = (t.steps && t.steps[step]) || "";
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(function () {
+                showIdle();
+                $("result-hint").textContent = t.noAnswer;
+            }, 45000);
+        }
+
+        /** Nach einem Ergebnis: im Einlagerungsmodus die MHD-Abfrage sofort holen */
+        function afterScan(isPurchase) {
+            if (typeof window.haStorageAfterScan === "function") window.haStorageAfterScan();
+            if (isPurchase && typeof window.haStorageActive === "function" && window.haStorageActive()) {
+                var hint = $("result-hint");
+                hint.textContent = (hint.textContent ? hint.textContent + " · " : "") + t.bbFollows;
+            }
+        }
+
         function setConnection(cls, text) {
             $("conn").className = "conn " + cls;
             $("conn-text").textContent = text;
@@ -540,12 +610,21 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
                         break;
                     }
                     showResult(info.state || "ok", info.title, info.name, info.state === "unknown" ? "beep_nosuccess" : "beep_success", info.detail);
+                    afterScan(info.title === A.purchase);
                     break;
                 case "1":
                     showResult("lookup", t.lookedUp, he.decode(text), "beep_success", A.assign);
+                    afterScan(false);
                     break;
                 case "2":
                     showResult("unknown", t.unknown, text, "beep_nosuccess", A.assign);
+                    afterScan(false);
+                    break;
+                case "5":
+                    // Home-Assistant-Add-on: Verarbeitung laeuft ("Schritt|Barcode")
+                    var progress = text.split("|");
+                    showBusy(progress[0], progress[1] || "");
+                    if (typeof window.haStorageProgress === "function") window.haStorageProgress(progress[0]);
                     break;
                 case "4":
                     setMode(text);

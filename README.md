@@ -76,8 +76,13 @@ Die Screen-Seite (in BarcodeBuddy oben „Screen“) ist für Tablets und Smartp
 - Ergebniskarte mit Aktion, großem Produktnamen und Details (z.B. „Eingekauft – Milch – 1 Packung · Bestand: 3“),
   farbig nach Ergebnis; nach 4 Sekunden wieder „Bereit zum Scannen“
 - Verlauf der letzten Scans mit Uhrzeit
-- Mengen-Tastatur statt Browser-Eingabefenster
+- „Wird verarbeitet …“ mit Spinner und aktuellem Schritt (Barcode empfangen, Suche bei Open Food Facts,
+  Produkt anlegen, Bild laden), sobald ein Barcode eingeht – bis das Ergebnis bzw. die MHD-Abfrage erscheint
+- **Menge korrigieren:** Zuletzt eingekauften Artikel auf die richtige Anzahl setzen (z.B. 1× gescannt, 6 gekauft).
+  Der Bestandseintrag in Grocy wird geändert; die Standardmenge des Barcodes bleibt unverändert.
+  Möglich bis 30 Minuten nach dem Einkauf.
 - Ton und „Bildschirm wach halten“ per Taste, Vollbild-Taste, Verbindungsanzeige
+- Funktioniert auch über unverschlüsseltes HTTP: alle Icons sind eingebettet, nichts wird von fremden Servern geladen
 - Hell- und Dunkelmodus nach Systemeinstellung, Texte auf Deutsch oder Englisch (Option `product_language`)
 - Hochformat, Querformat und Smartphone; im Querformat passt alles ohne Scrollen auf den Bildschirm
 

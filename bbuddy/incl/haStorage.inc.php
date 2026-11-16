@@ -22,6 +22,8 @@ class HaStorage {
     const NEVER_EXPIRES = "2999-12-31";
     const MAX_PENDING   = 50;
     const MAX_DONE      = 10;
+    /** So lange nach einem Einkauf kann dessen Menge auf der Screen-Seite korrigiert werden */
+    const LAST_PURCHASE_MAX_AGE_S = 1800;
 
     // ---------------------------------------------------------------- Zustand
 
@@ -38,7 +40,7 @@ class HaStorage {
             $state = json_decode((string)stream_get_contents($handle), true);
             if (!is_array($state))
                 $state = array();
-            $state += array("session" => null, "pending" => array(), "last_date" => null, "done" => array());
+            $state += array("session" => null, "pending" => array(), "last_date" => null, "done" => array(), "last_purchase" => null);
 
             if ($state["session"] !== null && time() - (int)($state["session"]["last_activity"] ?? 0) > self::SESSION_TIMEOUT_S) {
                 $state["session"] = null;
@@ -78,6 +80,7 @@ class HaStorage {
                 "session"   => $state["session"],
                 "pending"   => array_values($state["pending"]),
                 "last_date" => $state["last_date"],
+                "last_purchase" => self::freshLastPurchase($state),
                 "done"      => $state["done"],
                 "lang"      => HaAutoCreate::language(),
             );
@@ -134,11 +137,12 @@ class HaStorage {
         return $data;
     }
 
-    /** Nach dem Einkauf: Bestandseintraege fuer die MHD-Abfrage vormerken */
+    /**
+     * Nach dem Einkauf: Einkauf fuer die Mengenkorrektur merken und, bei laufender Einlagerung,
+     * die Bestandseintraege fuer die MHD-Abfrage vormerken.
+     */
     public static function afterPurchase(int $productId, $response): void {
         try {
-            if (self::activeSession() === null)
-                return;
             $rows = is_string($response) ? json_decode($response, true) : null;
             if (!is_array($rows))
                 return;
@@ -156,20 +160,30 @@ class HaStorage {
             }
             if (count($stockIds) == 0)
                 return;
+            $stockIds = array_values(array_unique($stockIds));
 
             $product = HaAutoCreate::grocyRequest("GET", "objects/products/" . $productId);
+            $name    = is_array($product) ? (string)$product["name"] : "#$productId";
+            $last    = array(
+                "product_id" => $productId,
+                "name"       => $name,
+                "stock_ids"  => $stockIds,
+                "amount"     => $amount,
+                "time"       => time(),
+            );
             $item    = array(
                 "id"               => bin2hex(random_bytes(8)),
                 "product_id"       => $productId,
-                "name"             => is_array($product) ? (string)$product["name"] : "#$productId",
+                "name"             => $name,
                 "has_picture"      => is_array($product) && !empty($product["picture_file_name"]),
                 "amount"           => $amount,
-                "stock_ids"        => array_values(array_unique($stockIds)),
+                "stock_ids"        => $stockIds,
                 "best_before_date" => $bestBefore,
                 "created"          => time(),
             );
 
-            self::withState(function (array &$state) use ($item) {
+            self::withState(function (array &$state) use ($item, $last) {
+                $state["last_purchase"] = $last;
                 if ($state["session"] === null)
                     return;
                 $state["pending"][] = $item;
@@ -178,10 +192,75 @@ class HaStorage {
                 $state["session"]["last_activity"] = time();
             });
         } catch (Throwable $e) {
-            // Der Einkauf selbst ist gebucht; ohne Abfrage bleibt das Standard-MHD
-            $log = new LogOutput("Einlagerung: MHD-Abfrage konnte nicht vorgemerkt werden: " . $e->getMessage(), EVENT_TYPE_ERROR);
-            $log->dontSendWebsocket()->createLog();
+            // Der Einkauf selbst ist gebucht; ohne Vormerkung bleibt das Standard-MHD
+            DatabaseConnection::getInstance()->saveLog("Einkauf konnte nicht vorgemerkt werden (MHD-Abfrage/Mengenkorrektur): " . $e->getMessage());
         }
+    }
+
+    private static function freshLastPurchase(array $state): ?array {
+        $last = $state["last_purchase"] ?? null;
+        if (!is_array($last) || time() - (int)$last["time"] > self::LAST_PURCHASE_MAX_AGE_S)
+            return null;
+        return array("name" => $last["name"], "amount" => $last["amount"]);
+    }
+
+    // ---------------------------------------------------------------- Menge korrigieren
+
+    /**
+     * Setzt die Menge des zuletzt gebuchten Einkaufs (z.B. 1 gescannt, 6 gekauft).
+     * Aendert den Bestandseintrag in Grocy; die Standardmenge des Barcodes bleibt unveraendert.
+     */
+    public static function setLastPurchaseAmount(float $target): array {
+        if (!($target > 0) || $target > 99999)
+            throw new InvalidArgumentException("Ungültige Menge");
+        $last = self::withState(function (array &$state) {
+            return $state["last_purchase"] ?? null;
+        });
+        if (!is_array($last) || time() - (int)$last["time"] > self::LAST_PURCHASE_MAX_AGE_S)
+            throw new InvalidArgumentException("Kein Einkauf in den letzten 30 Minuten gefunden");
+
+        $before = (float)$last["amount"];
+        $delta  = $target - $before;
+        if (abs($delta) > 0.00001) {
+            $entry = null;
+            foreach (HaAutoCreate::grocyGet("stock/products/" . (int)$last["product_id"] . "/entries") as $candidate) {
+                if (in_array((string)$candidate["stock_id"], $last["stock_ids"], true)) {
+                    $entry = $candidate;
+                    break;
+                }
+            }
+            if ($entry === null)
+                throw new RuntimeException("Bestandseintrag in Grocy nicht gefunden (bereits verbraucht?)");
+            $newAmount = (float)$entry["amount"] + $delta;
+            if ($newAmount <= 0)
+                throw new InvalidArgumentException("Die Menge kann nicht so weit verringert werden");
+            self::putStockEntry($entry, array("amount" => $newAmount));
+        }
+
+        self::withState(function (array &$state) use ($last, $target) {
+            if (is_array($state["last_purchase"]) && $state["last_purchase"]["stock_ids"] === $last["stock_ids"])
+                $state["last_purchase"]["amount"] = $target;
+            foreach ($state["pending"] as $index => $item) {
+                if ($item["stock_ids"] === $last["stock_ids"])
+                    $state["pending"][$index]["amount"] = $target;
+            }
+        });
+        DatabaseConnection::getInstance()->saveLog("Menge korrigiert: " . $last["name"] . " von " . $before . " auf " . $target);
+        return array("name" => $last["name"], "amount" => $target, "before" => $before);
+    }
+
+    /** Grocy ueberschreibt beim Bearbeiten alle Felder, daher die aktuellen Werte mitsenden */
+    private static function putStockEntry(array $entry, array $changes): void {
+        HaAutoCreate::grocyRequest("PUT", "stock/entry/" . (int)$entry["id"], array_merge(array(
+            "amount"               => $entry["amount"],
+            "best_before_date"     => $entry["best_before_date"],
+            "location_id"          => $entry["location_id"],
+            "shopping_location_id" => $entry["shopping_location_id"] ?? null,
+            "price"                => $entry["price"] ?? null,
+            "open"                 => !empty($entry["open"]),
+            "purchased_date"       => $entry["purchased_date"],
+            "note"                 => $entry["note"] ?? null,
+        ), $changes));
     }
 
     // ---------------------------------------------------------------- MHD setzen
@@ -231,7 +310,6 @@ class HaStorage {
         return checkdate((int)$m[2], (int)$m[3], (int)$m[1]);
     }
 
-    /** Grocy ueberschreibt beim Bearbeiten alle Felder, daher die aktuellen Werte mitsenden */
     private static function updateStockEntries(int $productId, array $stockIds, string $date): void {
         $entries = HaAutoCreate::grocyGet("stock/products/" . $productId . "/entries");
         $found   = 0;
@@ -239,16 +317,7 @@ class HaStorage {
             if (!in_array((string)$entry["stock_id"], $stockIds, true))
                 continue;
             $found++;
-            HaAutoCreate::grocyRequest("PUT", "stock/entry/" . (int)$entry["id"], array(
-                "amount"               => $entry["amount"],
-                "best_before_date"     => $date,
-                "location_id"          => $entry["location_id"],
-                "shopping_location_id" => $entry["shopping_location_id"] ?? null,
-                "price"                => $entry["price"] ?? null,
-                "open"                 => !empty($entry["open"]),
-                "purchased_date"       => $entry["purchased_date"],
-                "note"                 => $entry["note"] ?? null,
-            ));
+            self::putStockEntry($entry, array("best_before_date" => $date));
         }
         if ($found == 0)
             throw new RuntimeException("Bestandseintrag in Grocy nicht gefunden (bereits verbraucht?)");
