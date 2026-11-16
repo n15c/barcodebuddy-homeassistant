@@ -8,6 +8,7 @@
  * POST ?action=start             {"location_id": N}
  * POST ?action=stop
  * POST ?action=bestbefore        {"id": "...", "date": "YYYY-MM-DD" | "never" | null}
+ * POST ?action=quantity          {"amount": N}  Menge des zuletzt gebuchten Einkaufs korrigieren
  *
  * POST-Anfragen muessen JSON senden; das verhindert, dass fremde Seiten sie per Formular ausloesen.
  */
@@ -75,6 +76,10 @@ try {
             if ($date !== null && !is_string($date))
                 haRespond(400, array("error" => "Ungültiges Datum"));
             haRespond(200, HaStorage::setBestBefore((string)($input["id"] ?? ""), $date));
+        case "quantity":
+            if (!isset($input["amount"]) || !is_numeric($input["amount"]))
+                haRespond(400, array("error" => "Ungültige Menge"));
+            haRespond(200, HaStorage::setLastPurchaseAmount((float)$input["amount"]));
     }
     haRespond(400, array("error" => "Unbekannte Aktion"));
 } catch (InvalidArgumentException $e) {

@@ -32,6 +32,24 @@ class HaAutoCreate {
 
     private static $options = null;
 
+    /** Live-Code fuer die Screen-Seite: Verarbeitung laeuft ("Schritt|Barcode"), nicht von BarcodeBuddy belegt */
+    const WS_PROGRESS = 5;
+
+    /**
+     * Meldet der Screen-Seite einen Verarbeitungsschritt (received, lookup, create, picture), damit
+     * sichtbar ist, dass im Hintergrund etwas passiert. Fehler hier sind egal.
+     */
+    public static function progress(string $step, string $barcode): void {
+        try {
+            if (!class_exists("SocketConnection"))
+                return;
+            // Der Live-Server baut daraus JSON ohne Escaping: nur unkritische Zeichen senden
+            $code = substr((string)preg_replace('/[^A-Za-z0-9:._-]/', '', $barcode), 0, 64);
+            SocketConnection::sendWebsocketMessage(self::WS_PROGRESS, preg_replace('/[^a-z]/', '', $step) . "|" . $code);
+        } catch (Throwable $e) {
+        }
+    }
+
     /**
      * Wird am Anfang von processUnknownBarcode() aufgerufen.
      * @return string|null Log-Ausgabe, wenn das Produkt angelegt und verarbeitet wurde, sonst null
@@ -45,9 +63,11 @@ class HaAutoCreate {
             return null;
 
         try {
+            self::progress("lookup", $barcode);
             $off = self::lookupOff($barcode);
             if ($off === null)
                 return null;
+            self::progress("create", $barcode);
             $created = self::createInGrocy($barcode, $off);
         } catch (Throwable $e) {
             $log = new LogOutput("Automatisches Anlegen aus Open Food Facts fehlgeschlagen: " . $e->getMessage(), EVENT_TYPE_ERROR, $barcode);
@@ -290,6 +310,7 @@ class HaAutoCreate {
         // Ist der Bildserver gerade nicht erreichbar, wird das Bild im Hintergrund nachgeladen.
         $pictureUrls = self::pictureUrls($off);
         if (count($pictureUrls) > 0) {
+            self::progress("picture", $barcode);
             try {
                 $fileName = self::fetchAndUploadPicture($barcode, array_slice($pictureUrls, 0, 1),
                     array(CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_TIMEOUT => 20));
