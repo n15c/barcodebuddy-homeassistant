@@ -108,7 +108,7 @@ function getHtmlSettingsGeneral(): string {
     $html->addCheckbox("GS1_PARSING_ENABLED", "Enable GS1/Datamatrix parsing", $config["GS1_PARSING_ENABLED"], false, false);
     $html->addCheckbox("MORE_VERBOSE", "More verbose logs", $config["MORE_VERBOSE"], false, false);
     $html->addLineBreak(2);
-    $html->addHtml('<small><i>Hint: You can find picture files of the default barcodes in the &quot;example&quot; folder or <a style="color: inherit;" href="https://github.com/Forceu/barcodebuddy/tree/master/example/defaultBarcodes">online</a></i></small>');
+    $html->addHtml('<small><i>Hint: You can find picture files of the default barcodes in the &quot;example&quot; folder or <a style="color: inherit;" href="https://github.com/n15c/barcodebuddy-homeassistant/tree/master/barcodebuddy/example/defaultBarcodes">online</a></i></small>');
     $html->addHiddenField("isSaved", "1");
 
     return $html->getHtml();

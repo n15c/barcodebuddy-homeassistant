@@ -1,16 +1,16 @@
 ---
 name: Barcode Buddy for Grocy
-version: 1.0.0
+version: 1.1.0
 slug: bbuddy-grocy
-description: Barcode system for Grocy
-url: https://github.com/Forceu/barcodebuddy
+description: Barcode scanning for Grocy with Open Food Facts lookup and best-before prompts
+url: https://github.com/n15c/barcodebuddy-homeassistant
 ingress: true
 ingress_port: 8099
 ingress_stream: true
 panel_icon: mdi:barcode-scan
 panel_title: Barcode Buddy
 panel_admin: true
-startup: system
+startup: application
 arch:
 - aarch64
 - amd64
