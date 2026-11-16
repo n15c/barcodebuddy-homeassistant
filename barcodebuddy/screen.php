@@ -51,7 +51,7 @@ $T = array(
         "error" => "Verbindungsfehler", "history" => "Letzte Scans", "historyEmpty" => "Noch keine Scans",
         "connected" => "Verbunden", "connecting" => "Verbinde …", "unavailable" => "Nicht erreichbar",
         "noSse" => "Dieser Browser unterstützt keine Live-Anzeige (Server-Sent Events).",
-        "sound" => "Ton & Bildschirm wach halten", "fullscreen" => "Vollbild", "delete" => "Löschen",
+        "sound" => "Ton & Bildschirm wach halten", "fullscreen" => "Vollbild", "delete" => "Löschen", "editProduct" => "Produkt bearbeiten",
         "busy" => "Wird verarbeitet …", "bbFollows" => "MHD-Abfrage folgt …", "noAnswer" => "Keine Rückmeldung erhalten – bitte im Protokoll nachsehen",
         "steps" => array("received" => "Barcode empfangen", "lookup" => "Suche bei Open Food Facts …",
             "create" => "Lege Produkt in Grocy an …", "picture" => "Lade Produktbild …"),
@@ -72,7 +72,7 @@ $T = array(
         "error" => "Connection error", "history" => "Recent scans", "historyEmpty" => "No scans yet",
         "connected" => "Connected", "connecting" => "Connecting …", "unavailable" => "Unavailable",
         "noSse" => "This browser does not support live updates (server-sent events).",
-        "sound" => "Sound & keep screen on", "fullscreen" => "Fullscreen", "delete" => "Delete",
+        "sound" => "Sound & keep screen on", "fullscreen" => "Fullscreen", "delete" => "Delete", "editProduct" => "Edit product",
         "busy" => "Processing …", "bbFollows" => "Best-before prompt follows …", "noAnswer" => "No response received – please check the log",
         "steps" => array("received" => "Barcode received", "lookup" => "Looking up Open Food Facts …",
             "create" => "Creating product in Grocy …", "picture" => "Loading product picture …"),
@@ -200,6 +200,8 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         .result[data-state="busy"] .spinner { display: block; }
         .result[data-state="busy"] .result-hint { color: var(--blue); font-weight: 600; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .result-action { margin-top: 16px; min-height: 52px; padding: 0 22px; border: 0; border-radius: 999px; background: rgba(0,0,0,.08); color: inherit; font-weight: 700; font-size: 1.05rem; }
+        .result-action:active { transform: scale(.96); }
         .result.pop { animation: pop .35s ease-out; }
         .result-text.pre { white-space: pre-wrap; font-size: 1.1rem; font-weight: 600; }
         @keyframes pulse { 0%, 100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.06); opacity: .9; } }
@@ -292,6 +294,7 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         <div class="result-title" id="result-title"><?php echo htmlspecialchars($t["ready"]) ?></div>
         <div class="result-text" id="result-text"></div>
         <div class="result-hint" id="result-hint"><?php echo htmlspecialchars($t["readyHint"]) ?></div>
+        <button class="result-action" id="result-edit" hidden><?php echo htmlspecialchars($t["editProduct"]) ?></button>
     </section>
     <section class="card history">
         <h2><?php echo htmlspecialchars($t["history"]) ?></h2>
@@ -349,7 +352,14 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         window.sendBarcode = sendBarcode;
         window.closeNav = function () {};
 
+        var currentMode = null;
         function setMode(name) {
+            // Wechsel in den Kauf-Modus: Lagerort waehlen lassen, damit das MHD abgefragt wird
+            // (nicht beim ersten Laden der Seite, nur bei einem echten Wechsel)
+            if (name === "Purchase" && currentMode !== null && currentMode !== "Purchase"
+                && typeof window.haStorageEnsureSession === "function")
+                window.haStorageEnsureSession();
+            currentMode = name;
             $("mode").textContent = (t.modes && t.modes[name]) || name;
             var color = BB.modeColors[name] || "green";
             document.documentElement.style.setProperty("--mode", "var(--" + color + ")");
@@ -361,6 +371,8 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         Array.prototype.forEach.call(document.querySelectorAll(".tile[data-barcode]"), function (tile) {
             tile.addEventListener("click", function () {
                 sendBarcode(tile.getAttribute("data-barcode"));
+                if (tile.getAttribute("data-mode") === "Purchase" && typeof window.haStorageEnsureSession === "function")
+                    window.haStorageEnsureSession();
             });
         });
 
@@ -489,6 +501,7 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         // ------------------------------------------------------------ Ergebnis & Verlauf
         var resetTimer = null;
         function showIdle() {
+            $("result-edit").hidden = true;
             var result = $("result");
             result.setAttribute("data-state", "idle");
             $("result-icon").setAttribute("d", BB.icons.scan);
@@ -516,6 +529,7 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
         }
 
         function showResult(state, title, text, sound, detail) {
+            $("result-edit").hidden = true;
             var result = $("result");
             result.setAttribute("data-state", state);
             result.classList.remove("pop"); void result.offsetWidth; result.classList.add("pop");
@@ -544,8 +558,20 @@ $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_
             }, 45000);
         }
 
+        // Nach einem Einkauf: Produkt des letzten Einkaufs bearbeiten (Lagerort, Mengeneinheit)
+        $("result-edit").addEventListener("click", function () {
+            clearTimeout(resetTimer);
+            if (typeof window.haStorageEditProduct === "function")
+                window.haStorageEditProduct(0, function () { showIdle(); });
+        });
+
         /** Nach einem Ergebnis: im Einlagerungsmodus die MHD-Abfrage sofort holen */
         function afterScan(isPurchase) {
+            if (isPurchase) {
+                $("result-edit").hidden = false;
+                clearTimeout(resetTimer);
+                resetTimer = setTimeout(showIdle, 10000);
+            }
             if (typeof window.haStorageAfterScan === "function") window.haStorageAfterScan();
             if (isPurchase && typeof window.haStorageActive === "function" && window.haStorageActive()) {
                 var hint = $("result-hint");

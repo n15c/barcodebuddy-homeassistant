@@ -97,7 +97,9 @@ class WebUiGenerator {
 
 
     public function printHtml(): void {
-        echo $this->htmlOutput;
+        // Home-Assistant-Add-on: Oberflaeche auf Deutsch, wenn eingestellt
+        require_once __DIR__ . "/haI18n.inc.php";
+        echo HaI18n::translatePage($this->htmlOutput);
     }
 
 
@@ -115,7 +117,7 @@ class WebUiGenerator {
         <section id="'.$id.'" class="section--center mdl-grid--no-spacing mdl-grid mdl-shadow--2dp">
             <div class="mdl-card mdl-cell  mdl-cell--12-col">
               <div class="mdl-card__supporting-text" style="overflow-x: auto; ">
-                <h4>' . $title . '</h4><br>
+                <h4 class="bb-card-title">' . $title . '</h4>
         ' . $html . '
         </div>
             </div>');
@@ -141,6 +143,27 @@ class WebUiGenerator {
     }
 
     /**
+     * Eingebettete Icons (Material Icons, Apache License 2.0) fuer Navigation und Kopfzeile.
+     * Keine Schrift oder externe Datei noetig, funktioniert auch ohne Internet und ueber HTTP.
+     */
+    const SVG_ICONS = array(
+        "logo"     => "M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM22 7h-2V4h-3V2h5v5zm0 15v-5h-2v3h-3v2h5zM2 22h5v-2H4v-3H2v5zM2 2v5h2V4h3V2H2z",
+        "home"     => "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
+        "settings" => "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+        "quantity" => "M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z",
+        "chores"   => "M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z",
+        "tag"      => "M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z",
+        "api"      => "M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z",
+        "admin"    => "M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z",
+        "screen"   => "M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z",
+        "external" => "M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z",
+    );
+
+    public static function svgIcon(string $name): string {
+        return '<svg class="bb-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="' . self::SVG_ICONS[$name] . '"/></svg>';
+    }
+
+    /**
      * @param string|null $additionalHeader
      */
     public function addHeader(?string $additionalHeader = null, bool $enableDialogs = false): void {
@@ -151,6 +174,7 @@ class WebUiGenerator {
         } else {
             $folder = "./";
         }
+        $hasMenu = ($this->menu != MENU_SETUP && $this->menu != MENU_ERROR && $this->menu != MENU_LOGIN);
         if ($this->menu == MENU_SETUP || $this->menu == MENU_ERROR) {
             $indexfile = "setup.php";
         } elseif ($this->menu == MENU_LOGIN) {
@@ -180,10 +204,10 @@ class WebUiGenerator {
         <link rel="icon" type="image/png" sizes="96x96" href="' . $folder . 'incl/img/favicon/favicon-96x96.png">
         <link rel="icon" type="image/png" sizes="16x16" href="' . $folder . 'incl/img/favicon/favicon-16x16.png">
         <meta name="msapplication-TileImage" content="' . $folder . 'incl/img/favicon/ms-icon-144x144.png">
-        <meta name="msapplication-navbutton-color" content="#3f51b5">
-        <meta name="msapplication-TileColor" content="#3f51b5">
-        <meta name="apple-mobile-web-app-status-bar-style" content="#3f51b5">
-        <meta name="theme-color" content="#3f51b5">
+        <meta name="msapplication-navbutton-color" content="#111827">
+        <meta name="msapplication-TileColor" content="#111827">
+        <meta name="apple-mobile-web-app-status-bar-style" content="#111827">
+        <meta name="theme-color" content="#111827">
 
 
         <style>
@@ -198,7 +222,8 @@ class WebUiGenerator {
         }
         </style>' . self::getIcons($folder) . '
         <link rel="stylesheet" href="' . $folder . 'incl/css/material.indigo-blue.min.css?v=' . BB_VERSION . '">
-        <link rel="stylesheet" href="' . $folder . 'incl/css/main.css?v=' . BB_VERSION . '"> ');
+        <link rel="stylesheet" href="' . $folder . 'incl/css/main.css?v=' . BB_VERSION . '">
+        <link rel="stylesheet" href="' . $folder . 'incl/css/theme.css?v=' . BB_VERSION . '"> ');
         if ($additionalHeader != null) {
             $this->addHtml($additionalHeader);
         }
@@ -211,43 +236,46 @@ class WebUiGenerator {
 
         $this->addHtml('</head>
 
-     <body class="mdl-demo mdl-color--grey-100 mdl-color-text--grey-700 mdl-base">
+     <body class="mdl-demo mdl-base bb-body">
      <script src="' . $folder . 'incl/js/scripts_top.js?v=' . BB_VERSION . '"></script>
 
-    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-      <header class="mdl-layout__header">
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header' . ($hasMenu ? ' mdl-layout--fixed-drawer' : '') . ' bb-layout">
+      <header class="mdl-layout__header bb-header">
         <div class="mdl-layout__header-row">
-          <!-- Title -->
-          <span class="mdl-layout-title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a style="color: white; text-decoration: none;" href="' . $folder . $indexfile . '">Barcode Buddy</a></span>
-          <!-- Add spacer, to align navigation to the right -->
+          <span class="mdl-layout-title bb-title"><a href="' . $folder . $indexfile . '">' . self::svgIcon("logo") . '<span>Barcode Buddy</span></a></span>
           <div class="mdl-layout-spacer"></div>');
-        if ($this->menu != MENU_SETUP && $this->menu != MENU_ERROR && $this->menu != MENU_LOGIN) {
-            $this->addHtml('<nav class="mdl-navigation mdl-layout--always">');
-            if (!$CONFIG->HIDE_LINK_GROCY)
-                $this->addHtml('<a class="mdl-navigation__link" target="_blank" href="' . BBConfig::getInstance()["GROCY_BASE_URL"] . '">Grocy</a>');
-
+        if ($hasMenu) {
+            $this->addHtml('<nav class="bb-header-actions">');
             if (!$CONFIG->HIDE_LINK_SCREEN)
-                $this->addHtml('<a class="mdl-navigation__link" href="' . $folder . 'screen.php">Screen</a>');
+                $this->addHtml('<a class="bb-pill bb-pill--primary" href="' . $folder . 'screen.php">' . self::svgIcon("screen") . '<span>Screen</span></a>');
+            if (!$CONFIG->HIDE_LINK_GROCY)
+                $this->addHtml('<a class="bb-pill" target="_blank" rel="noopener" href="' . BBConfig::getInstance()["GROCY_BASE_URL"] . '">' . self::svgIcon("external") . '<span>Grocy</span></a>');
             $this->addHtml('</nav>');
         }
         $this->addHtml('  </div>
       </header>');
-        if ($this->menu != MENU_SETUP && $this->menu != MENU_ERROR && $this->menu != MENU_LOGIN) {
-            $this->addHtml('<div class="mdl-layout__drawer">
-        <span class="mdl-layout-title">Menu</span>
-        <nav class="mdl-navigation">
-          <a class="mdl-navigation__link" href="' . $folder . 'index.php">Overview</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/settings.php">Settings</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/quantities.php">Quantities</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/chores.php">Chores</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/tags.php">Tags</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/apimanagement.php">API</a>
-          <a class="mdl-navigation__link" href="' . $folder . 'menu/federation.php">Federation</a>');
-            if (!$CONFIG->DISABLE_AUTHENTICATION) {
-                $this->addHtml('
-             <a class="mdl-navigation__link" href="' . $folder . 'menu/admin.php">Admin</a>');
+        if ($hasMenu) {
+            $items = array(
+                array("index.php", "Overview", "home"),
+                array("menu/settings.php", "Settings", "settings"),
+                array("menu/quantities.php", "Quantities", "quantity"),
+                array("menu/chores.php", "Chores", "chores"),
+                array("menu/tags.php", "Tags", "tag"),
+                array("menu/apimanagement.php", "API", "api"),
+            );
+            if (!$CONFIG->DISABLE_AUTHENTICATION)
+                $items[] = array("menu/admin.php", "Admin", "admin");
+            $current = basename($_SERVER["PHP_SELF"] ?? "");
+            $this->addHtml('<div class="mdl-layout__drawer bb-drawer">
+        <span class="mdl-layout-title bb-drawer-title">' . self::svgIcon("logo") . '<span>Barcode Buddy</span></span>
+        <nav class="mdl-navigation">');
+            foreach ($items as $item) {
+                $active = basename($item[0]) === $current ? " is-active" : "";
+                $this->addHtml('<a class="mdl-navigation__link' . $active . '" href="' . $folder . $item[0] . '">'
+                    . self::svgIcon($item[2]) . '<span>' . $item[1] . '</span></a>');
             }
             $this->addHtml('</nav>
+        <div class="bb-drawer-footer">Version ' . BB_VERSION_READABLE . '</div>
       </div>');
         }
         $this->addHtml('<main class="mdl-layout__content" style="flex: 1 0 auto;">
@@ -271,9 +299,8 @@ class WebUiGenerator {
 </div>
 
 
-<footer class="mdl-mini-footer">
+<footer class="mdl-mini-footer bb-footer">
       <div class="mdl-mini-footer__left-section">
-        <div class="mdl-logo">Barcode Buddy </div>
         <ul class="mdl-mini-footer__link-list">
               <li><a href="https://barcodebuddy-documentation.readthedocs.io/en/latest/">Documentation</a></li>
               <li><a href="https://github.com/n15c/barcodebuddy-homeassistant/tree/master/barcodebuddy">Source Code (Home Assistant Add-on)</a></li>
@@ -317,7 +344,6 @@ class WebUiGenerator {
             $this->addHtml('<button id="save-settings" onclick="checkAndReturn()" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color--accent mdl-color-text--accent-contrast">Save</button>');
         }
         $this->addHtml('</div><script src="' . $folder . 'incl/js/material.min.js?v=' . BB_VERSION . '"></script>' .
-            '<script src="' . $folder . 'incl/js/federation.js?v=' . BB_VERSION . '"></script>' .
             '<script src="' . $folder . 'incl/js/scripts.js?v=' . BB_VERSION . '"></script>');
 
         if ($this->menu == MENU_MAIN) {

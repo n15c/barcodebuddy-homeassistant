@@ -98,8 +98,12 @@ class HaStorage {
         return $locations;
     }
 
+    /**
+     * @param int $locationId Grocy-Lagerort oder 0 = Standard-Lagerort des jeweiligen Produkts
+     *                        (nur MHD-Abfrage, Lagerort bleibt wie in Grocy hinterlegt)
+     */
     public static function start(int $locationId): array {
-        $location = null;
+        $location = $locationId === 0 ? array("id" => 0, "name" => "") : null;
         foreach (self::getLocations() as $entry) {
             if ($entry["id"] === $locationId)
                 $location = $entry;
@@ -132,7 +136,7 @@ class HaStorage {
     /** Vor dem Einkauf: Lagerort der laufenden Einlagerung setzen */
     public static function beforePurchase(int $productId, array $data): array {
         $session = self::activeSession();
-        if ($session !== null)
+        if ($session !== null && (int)$session["location_id"] > 0)
             $data["location_id"] = (int)$session["location_id"];
         return $data;
     }
@@ -321,6 +325,105 @@ class HaStorage {
         }
         if ($found == 0)
             throw new RuntimeException("Bestandseintrag in Grocy nicht gefunden (bereits verbraucht?)");
+    }
+
+    // ---------------------------------------------------------------- Produkt nachbearbeiten
+
+    /** Letzter Einkauf (fuer "Produkt bearbeiten" ohne Angabe eines Produkts) */
+    private static function lastPurchase(): ?array {
+        $last = self::withState(function (array &$state) {
+            return $state["last_purchase"] ?? null;
+        });
+        if (!is_array($last) || time() - (int)$last["time"] > self::LAST_PURCHASE_MAX_AGE_S)
+            return null;
+        return $last;
+    }
+
+    /**
+     * Daten fuer den Bearbeiten-Dialog: Lagerort und Mengeneinheit des Produkts samt Auswahl.
+     * @param int $productId 0 = Produkt des letzten Einkaufs
+     */
+    public static function getProductForEdit(int $productId): array {
+        if ($productId <= 0) {
+            $last = self::lastPurchase();
+            if ($last === null)
+                throw new InvalidArgumentException("Kein Einkauf in den letzten 30 Minuten gefunden");
+            $productId = (int)$last["product_id"];
+        }
+        $product = HaAutoCreate::grocyRequest("GET", "objects/products/" . $productId);
+        if (!is_array($product) || !isset($product["id"]))
+            throw new InvalidArgumentException("Produkt nicht gefunden");
+        $units = array();
+        foreach (HaAutoCreate::grocyGet("objects/quantity_units") as $unit)
+            $units[] = array("id" => (int)$unit["id"], "name" => (string)$unit["name"]);
+        usort($units, function ($a, $b) {
+            return strcasecmp($a["name"], $b["name"]);
+        });
+        return array(
+            "product_id"  => (int)$product["id"],
+            "name"        => (string)$product["name"],
+            "location_id" => (int)$product["location_id"],
+            "qu_id"       => (int)$product["qu_id_stock"],
+            "locations"   => self::getLocations(),
+            "units"       => $units,
+        );
+    }
+
+    /**
+     * Aendert Standard-Lagerort und Mengeneinheit eines Produkts.
+     * - Lagerort: auch die Bestandseintraege des letzten Einkaufs dieses Produkts ziehen mit um.
+     * - Mengeneinheit: Grocy erlaubt den Wechsel nach dem ersten Einkauf nur mit einer Umrechnung
+     *   (alte -> neue Einheit). Fehlt sie, wird sie mit $factor fuer dieses Produkt angelegt;
+     *   Grocy rechnet die Bestaende dann selbst um.
+     */
+    public static function updateProduct(int $productId, ?int $locationId, ?int $quId, ?float $factor): array {
+        $product = HaAutoCreate::grocyRequest("GET", "objects/products/" . $productId);
+        if (!is_array($product) || !isset($product["id"]))
+            throw new InvalidArgumentException("Produkt nicht gefunden");
+        $changes = array();
+
+        if ($quId !== null && $quId > 0 && $quId !== (int)$product["qu_id_stock"]) {
+            $oldQu  = (int)$product["qu_id_stock"];
+            $exists = false;
+            foreach (HaAutoCreate::grocyGet("objects/quantity_unit_conversions") as $conversion) {
+                if ((int)$conversion["from_qu_id"] === $oldQu && (int)$conversion["to_qu_id"] === $quId
+                    && (empty($conversion["product_id"]) || (int)$conversion["product_id"] === $productId))
+                    $exists = true;
+            }
+            if (!$exists) {
+                if ($factor === null || !($factor > 0))
+                    throw new InvalidArgumentException("Bitte angeben, wie viele der neuen Einheit eine alte Einheit sind");
+                HaAutoCreate::grocyRequest("POST", "objects/quantity_unit_conversions", array(
+                    "from_qu_id" => $oldQu,
+                    "to_qu_id"   => $quId,
+                    "factor"     => $factor,
+                    "product_id" => $productId,
+                ));
+            }
+            HaAutoCreate::grocyRequest("PUT", "objects/products/" . $productId, array(
+                "qu_id_stock"    => $quId,
+                "qu_id_purchase" => $quId,
+                "qu_id_consume"  => $quId,
+                "qu_id_price"    => $quId,
+            ));
+            $changes[] = "Mengeneinheit";
+        }
+
+        if ($locationId !== null && $locationId > 0 && $locationId !== (int)$product["location_id"]) {
+            HaAutoCreate::grocyRequest("PUT", "objects/products/" . $productId, array("location_id" => $locationId));
+            $last = self::lastPurchase();
+            if ($last !== null && (int)$last["product_id"] === $productId) {
+                foreach (HaAutoCreate::grocyGet("stock/products/" . $productId . "/entries") as $entry) {
+                    if (in_array((string)$entry["stock_id"], $last["stock_ids"], true))
+                        self::putStockEntry($entry, array("location_id" => $locationId));
+                }
+            }
+            $changes[] = "Lagerort";
+        }
+
+        if (count($changes) > 0)
+            DatabaseConnection::getInstance()->saveLog("Produkt bearbeitet: " . $product["name"] . " (" . implode(", ", $changes) . ")");
+        return array("name" => (string)$product["name"], "changed" => $changes);
     }
 
     // ---------------------------------------------------------------- Produktbild

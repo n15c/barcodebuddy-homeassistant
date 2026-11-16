@@ -84,16 +84,6 @@ if (isset($_GET["text"])) {
     hideGetPostParameters();
 }
 
-//After clicking on buttons on Federation popup
-if (isset($_GET["fed"])) {
-    if ($_GET["fed"] == 1) {
-        BarcodeFederation::enableFederation();
-    } else {
-        BarcodeFederation::disableFederation();
-    }
-    hideGetPostParameters();
-}
-
 // If a button was pressed, we are processing everything here.
 // Only one row can be processed at a time
 processButtons();
@@ -138,26 +128,9 @@ $link = (new MenuItemLink())
     ->setText("Clear log")
     ->setLink('window.location.href=\'' . $CONFIG->getPhpSelfWithBaseUrl() . '?delete=log\'');
 $webUi->addCard("Processed Barcodes", getHtmlLogTextArea(), $link);
-$webUi->addScript("updateRedisCacheAndFederation(false)");
+$webUi->addScript("updateRedisCache(false)");
 $webUi->addFooter();
-displayFederationPopupHtml($webUi);
 $webUi->printHtml();
-
-function displayFederationPopupHtml(WebUiGenerator &$webUi): void {
-    $config = BBConfig::getInstance();
-    if (!$config["BBUDDY_SERVER_ENABLED"] && !$config["BBUDDY_SERVER_POPUPSHOWN"]) {
-        $webUi->addConfirmDialog("Do you want to enable Barcode Buddy Federation? This enables you to lookup " .
-            "barcodes that other users have already associated with a Grocy product before. It requires no signup, but " .
-            "is limited to 200 requests per day.<br><br><span style='font-size: smaller'><i>By using this method, you agree that all your Grocy product " .
-            "names that are associated with barcodes, the barcodes itself, your IP address and an unique ID will be " .
-            "sent and stored at a remote Barcode Buddy server located in Germany. No other data is sent or stored and " .
-            "no data will be used for commercial purposes. The sourcecode for the server application is available " .
-            "<a href='https://github.com/Forceu/barcodebuddy-federation/'>on Github</a> and can be selfhosted as well.</i>" .
-            "</span><br><br><b>Would you like to enable Barcode Buddy Federation?</b>",
-            "if (result) { location.href='./index.php?fed=1'; } else { location.href='./index.php?fed=0';}",
-            "Enable Barcode Buddy Federation", "Use Federation", "Cancel", "large");
-    }
-}
 
 //Check if a button on the web ui was pressed and process
 function processButtons(): void {
@@ -336,11 +309,6 @@ function getHtmlMainMenuTableKnown(array $barcodes): string {
         return $html->getHtml();
     } else {
 
-        $containsFederationName = false;
-        foreach ($barcodes['known'] as $item) {
-            if ($item['bbServerAltNames'] != null)
-                $containsFederationName = true;
-        }
         $arrayTableEntries = array(
             "Name",
             "Barcode",
@@ -350,8 +318,6 @@ function getHtmlMainMenuTableKnown(array $barcodes): string {
             "Tags",
             "Create",
             "Remove");
-        if ($containsFederationName)
-            array_splice($arrayTableEntries, 1, 0, array("Federation"));
 
         $table = new TableGenerator($arrayTableEntries);
         foreach ($barcodes['known'] as $item) {
@@ -361,16 +327,7 @@ function getHtmlMainMenuTableKnown(array $barcodes): string {
             }
             $itemId = $item['id'];
             $table->startRow();
-            $bbServerButton = "";
-            if ($item['bbServerAltNames'] != null) {
-                if (sizeof($item['bbServerAltNames']) > 1)
-                    $bbServerButton = getVoteButton($item) . getReportButton($item);
-                else
-                    $bbServerButton = getReportButton($item);
-            }
             $table->addCell(UiEditor::addTextWrap($item['name'], 15));
-            if ($containsFederationName)
-                $table->addCell($bbServerButton);
             $table->addCell($item['barcode']);
             $table->addCell($item['amount']);
             $table->addCell('<select style="max-width: 20em;" onchange=\'enableButton("select_' . $itemId . '", "button_add_' . $item['id'] . '", "button_consume_' . $item['id'] . '")\' id="select_' . $itemId . '" name="select_' . $itemId . '">' . printSelections($item['match'], $productinfo) . '</select>');
@@ -404,18 +361,6 @@ function getHtmlMainMenuTableKnown(array $barcodes): string {
         return $html->getHtml();
     }
 }
-
-function getReportButton(array $item): string {
-    $onclick = buildSafeOnClick('showReportFederationName', [$item['barcode'], $item['name']]);
-    return '<button type="button" class="btn btn-outline-secondary btn-sm" onclick="' . $onclick . '"><span class="icon-flag"></span></button>';
-}
-
-
-function getVoteButton(array $item): string {
-    $onclick = buildSafeOnClick('showMultipleFederationNames', [$item['barcode'], base64_encode(json_encode($item['bbServerAltNames']))]);
-    return '<button type="button" class="btn btn-primary  btn-sm" onclick="' . $onclick . '"><span class="icon-navigation-more"></span></button> ';
-}
-
 
 /**
  * Generate the table with barcodes

@@ -10,19 +10,6 @@ chmod 644 /etc/bbuddy-ha/options.json
 # Datenordner im Add-on-Konfigurationsordner (/addon_configs/<id>_bbuddy-grocy)
 mkdir -p /config/data
 
-# Einmalige Datenuebernahme aus Versionen vor 0.5.0: Damals lagen die Daten in
-# <HA-Konfiguration>/data. Die alten Dateien bleiben unveraendert liegen.
-OLD_DATA=/homeassistant/data
-if [ -f "${OLD_DATA}/barcodebuddy.db" ] && [ ! -e /config/data/barcodebuddy.db ]; then
-    bashio::log.info "Uebernehme bestehende Barcode-Buddy-Daten aus ${OLD_DATA}"
-    for f in barcodebuddy.db barcodebuddy.db-wal barcodebuddy.db-shm users.db users.db-wal users.db-shm config.php; do
-        if [ -f "${OLD_DATA}/${f}" ]; then
-            cp "${OLD_DATA}/${f}" "/config/data/${f}" && bashio::log.info "  ${f} uebernommen"
-        fi
-    done
-    bashio::log.info "Die alten Ordner data und keys in der HA-Konfiguration koennen nach einer Pruefung geloescht werden."
-fi
-
 chown -R barcodebuddy:barcodebuddy /config/data
 
 # Zeitzone von Home Assistant fuer PHP

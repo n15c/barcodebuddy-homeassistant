@@ -9,6 +9,8 @@
  * POST ?action=stop
  * POST ?action=bestbefore        {"id": "...", "date": "YYYY-MM-DD" | "never" | null}
  * POST ?action=quantity          {"amount": N}  Menge des zuletzt gebuchten Einkaufs korrigieren
+ * GET  ?action=product[&product=N] Daten zum Bearbeiten (ohne N: Produkt des letzten Einkaufs)
+ * POST ?action=product           {"product_id": N, "location_id": N, "qu_id": N, "factor": X}
  *
  * POST-Anfragen muessen JSON senden; das verhindert, dass fremde Seiten sie per Formular ausloesen.
  */
@@ -40,6 +42,8 @@ try {
                 haRespond(200, HaStorage::getState());
             case "locations":
                 haRespond(200, HaStorage::getLocations());
+            case "product":
+                haRespond(200, HaStorage::getProductForEdit((int)($_GET["product"] ?? 0)));
             case "picture":
                 $picture = HaStorage::getPicture(checkIfNumeric((string)($_GET["product"] ?? "")));
                 if ($picture === null) {
@@ -76,6 +80,12 @@ try {
             if ($date !== null && !is_string($date))
                 haRespond(400, array("error" => "Ungültiges Datum"));
             haRespond(200, HaStorage::setBestBefore((string)($input["id"] ?? ""), $date));
+        case "product":
+            haRespond(200, HaStorage::updateProduct(
+                (int)($input["product_id"] ?? 0),
+                isset($input["location_id"]) ? (int)$input["location_id"] : null,
+                isset($input["qu_id"]) ? (int)$input["qu_id"] : null,
+                isset($input["factor"]) && is_numeric($input["factor"]) ? (float)$input["factor"] : null));
         case "quantity":
             if (!isset($input["amount"]) || !is_numeric($input["amount"]))
                 haRespond(400, array("error" => "Ungültige Menge"));

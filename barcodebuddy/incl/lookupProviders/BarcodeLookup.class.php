@@ -31,8 +31,7 @@ class BarcodeLookup {
         LOOKUP_ID_PLUS          => "ProviderPlusSupermarkt",
         LOOKUP_ID_JUMBO         => "ProviderJumbo",
         LOOKUP_ID_OPENGTINDB    => "ProviderOpengtindb",
-        LOOKUP_ID_DISCOGS       => "ProviderDiscogs",
-        LOOKUP_ID_FEDERATION    => "ProviderFederation"
+        LOOKUP_ID_DISCOGS       => "ProviderDiscogs"
     );
 
     /**
@@ -47,6 +46,9 @@ class BarcodeLookup {
         $config       = BBConfig::getInstance();
         $orderAsArray = explode(",", $config["LOOKUP_ORDER"]);
         foreach ($orderAsArray as $orderId) {
+            // Gespeicherte Reihenfolge kann entfernte Anbieter enthalten (z.B. Federation)
+            if (!isset(self::$providers[$orderId]))
+                continue;
             $result = (new self::$providers[$orderId]())->lookupBarcode($barcode);
             if ($result != null)
                 return $result;

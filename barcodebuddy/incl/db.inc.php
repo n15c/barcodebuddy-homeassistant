@@ -26,7 +26,6 @@ require_once __DIR__ . "/modules/tagManager.php";
 require_once __DIR__ . "/modules/productMatcher.php";
 require_once __DIR__ . "/modules/choreManager.php";
 require_once __DIR__ . "/modules/quantityManager.php";
-require_once __DIR__ . "/modules/barcodeFederation.php";
 require_once __DIR__ . "/modules/dbUpgrade.php";
 
 
@@ -51,7 +50,7 @@ const LOOKUP_ID_UPCDATABASE   = "3";
 const LOOKUP_ID_ALBERTHEIJN   = "4";
 const LOOKUP_ID_JUMBO         = "5";
 const LOOKUP_ID_OPENGTINDB    = "6";
-const LOOKUP_ID_FEDERATION    = "7";
+// 7 war "Barcode Buddy Federation" (entfernt); die ID wird nicht wiederverwendet
 const LOOKUP_ID_PLUS          = "8";
 const LOOKUP_ID_DISCOGS       = "9";
 
@@ -109,7 +108,6 @@ class DatabaseConnection {
         "LOOKUP_USE_OPEN_GTIN_DATABASE" => "0",
         "LOOKUP_USE_DISCOGS" => "0",
         "GS1_PARSING_ENABLED" => "1",
-        "LOOKUP_USE_BBUDDY_SERVER" => "0",
         "LOOKUP_UPC_DATABASE_KEY" => "",
         "LOOKUP_OPENGTIN_KEY" => "",
         "LOOKUP_DISCOGS_TOKEN" => "",
@@ -117,10 +115,6 @@ class DatabaseConnection {
         "REDIS_IP" => "127.0.0.1",
         "REDIS_PORT" => "6379",
         "REDIS_PW" => "",
-        "BBUDDY_SERVER_UUID" => "",
-        "BBUDDY_SERVER_ENABLED" => "0",
-        "BBUDDY_SERVER_POPUPSHOWN" => "0",
-        "BBUDDY_SERVER_NEXTSYNC" => "0",
         "LOOKUP_ORDER" => LOOKUP_ID_OPENFOODFACTS . "," .
             LOOKUP_ID_UPCDB . "," .
             LOOKUP_ID_UPCDATABASE . "," .
@@ -128,8 +122,7 @@ class DatabaseConnection {
             LOOKUP_ID_PLUS . "," .
             LOOKUP_ID_JUMBO . "," .
             LOOKUP_ID_OPENGTINDB . "," .
-            LOOKUP_ID_DISCOGS . "," .
-            LOOKUP_ID_FEDERATION);
+            LOOKUP_ID_DISCOGS);
 
 
     const DB_INT_VALUES = array("REVERT_TIME");

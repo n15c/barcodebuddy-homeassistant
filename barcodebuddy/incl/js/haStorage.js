@@ -17,6 +17,14 @@
     var T = {
         de: {
             menu: "Einlagern …",
+            defaultLocation: "Standard-Lagerort des Produkts",
+            editProduct: "Produkt bearbeiten",
+            editLocation: "Lagerort",
+            editUnit: "Mengeneinheit",
+            editFactor: "Umrechnung: 1 %old% =",
+            editFactorHint: "Nötig, weil schon Bestand gebucht ist. Grocy rechnet den Bestand um.",
+            editSaved: "Gespeichert",
+            defaultLocationShort: "Standard-Lagerort",
             pickTitle: "Wo wird eingelagert?",
             storing: "Einlagern in",
             stop: "Beenden",
@@ -47,6 +55,14 @@
         },
         en: {
             menu: "Store items …",
+            defaultLocation: "Product's default location",
+            editProduct: "Edit product",
+            editLocation: "Location",
+            editUnit: "Quantity unit",
+            editFactor: "Conversion: 1 %old% =",
+            editFactorHint: "Needed because stock was already booked. Grocy converts the stock.",
+            editSaved: "Saved",
+            defaultLocationShort: "default location",
             pickTitle: "Where are you storing items?",
             storing: "Storing in",
             stop: "Stop",
@@ -116,13 +132,17 @@
         return svg;
     }
 
-    function request(method, action, body) {
+    function request(method, action, body, query) {
         var options = {method: method, credentials: "same-origin", headers: {}};
         if (body !== undefined) {
             options.headers["Content-Type"] = "application/json";
             options.body = JSON.stringify(body);
         }
-        return fetch(API + "?action=" + encodeURIComponent(action), options).then(function (response) {
+        var url = API + "?action=" + encodeURIComponent(action);
+        Object.keys(query || {}).forEach(function (key) {
+            url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(query[key]);
+        });
+        return fetch(url, options).then(function (response) {
             return response.json().catch(function () {
                 return {};
             }).then(function (data) {
@@ -301,6 +321,19 @@
         ".ha-actions .ha-never{background:#fff3e0;color:#e65100}" +
         ".ha-actions .ha-skip{background:#eee;color:#333}" +
         ".ha-loc{display:block;width:100%;margin:8px 0;font-size:1.5em}" +
+        ".ha-edit h3{margin:16px 0 8px;font-size:1em;color:#6b7280;text-transform:uppercase;letter-spacing:.05em}" +
+        ".ha-choices{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}" +
+        ".ha-choices button{font:inherit;font-weight:600;font-size:1.05em;padding:12px 16px;min-height:52px;border:2px solid transparent;border-radius:12px;background:#f3f4f6;color:#111827}" +
+        ".ha-choices button.ha-sel{border-color:#16a34a;background:#dcfce7;color:#166534}" +
+        ".ha-factor{display:none;margin-top:14px;padding:12px;border-radius:14px;background:#eff6ff}" +
+        ".ha-factor.ha-on{display:block}" +
+        ".ha-factor-row{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:1.2em;flex-wrap:wrap}" +
+        ".ha-factor-row button{font:inherit;width:52px;height:52px;border:0;border-radius:12px;background:#dbeafe;color:#1e40af;font-size:1.4em}" +
+        ".ha-factor-val{min-width:70px;font-size:1.5em}" +
+        ".ha-edit-link{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 12px;border:0;border-radius:999px;background:#eff6ff;color:#1d4ed8;font:inherit;font-size:.9em;font-weight:600}" +
+        "@media (prefers-color-scheme: dark){.ha-choices button{background:#1f2937;color:#f3f4f6}.ha-choices button.ha-sel{background:#14532d;color:#bbf7d0}" +
+        ".ha-factor{background:#1e293b}.ha-factor-row button{background:#1e3a8a;color:#dbeafe}.ha-edit-link{background:#1e3a8a;color:#dbeafe}}" +
+        ".ha-loc.ha-loc-default{background:#f3f4f6;color:#374151;font-size:1.2em}" +
         ".ha-more{margin-top:10px;color:#666}" +
         ".ha-icon{width:1.2em;height:1.2em;fill:currentColor;vertical-align:middle;flex:none}" +
         "#ha-banner .ha-banner-text{display:flex;align-items:center;gap:10px}#ha-banner .ha-icon{width:1.3em;height:1.3em}" +
@@ -331,7 +364,7 @@
         banner.innerHTML = "";
         var open = state.pending.length ? " · " + state.pending.length + " " + t("open") : "";
         banner.appendChild(el("span", {"class": "ha-banner-text"}, [icon("fridge"),
-            document.createTextNode(t("storing") + ": " + session.location_name + open)]));
+            document.createTextNode(t("storing") + ": " + locationLabel(session) + open)]));
         banner.appendChild(el("button", {text: t("stop"), onclick: stopSession}));
         banner.style.display = "flex";
         if (banner.classList.contains("ha-fixed"))
@@ -348,31 +381,141 @@
 
     // ------------------------------------------------------------------ Lagerort-Auswahl
 
+    function locationLabel(session) {
+        return session.location_id ? session.location_name : t("defaultLocationShort");
+    }
+
+    var pickerOpen = false, starting = false;
+
     function openPicker() {
         if (typeof window.closeNav === "function") window.closeNav();
+        if (pickerOpen) return;
+        pickerOpen = true;
         request("GET", "locations").then(function (locations) {
             var modal = el("div", {"class": "ha-modal"});
             var box = el("div", {"class": "ha-box"}, [el("h2", {text: t("pickTitle")})]);
+            function close() {
+                modal.remove();
+                pickerOpen = false;
+            }
+            function choose(id) {
+                starting = true;
+                request("POST", "start", {location_id: id}).then(function () {
+                    close();
+                    return refresh();
+                }).catch(showGlobalError).then(function () {
+                    starting = false;
+                });
+            }
             if (!locations.length) box.appendChild(el("p", {text: t("noLocations")}));
             locations.forEach(function (location) {
-                box.appendChild(el("button", {
-                    "class": "ha-loc", text: location.name, onclick: function () {
-                        request("POST", "start", {location_id: location.id}).then(function () {
-                            modal.remove();
-                            refresh();
-                        }).catch(showGlobalError);
-                    }
-                }));
+                box.appendChild(el("button", {"class": "ha-loc", text: location.name, onclick: function () {
+                    choose(location.id);
+                }}));
             });
+            // Ohne festen Lagerort einkaufen: Grocy nimmt den Standard-Lagerort des Produkts, MHD wird trotzdem abgefragt
+            box.appendChild(el("button", {"class": "ha-loc ha-loc-default", text: t("defaultLocation"), onclick: function () {
+                choose(0);
+            }}));
             box.appendChild(el("div", {"class": "ha-actions"}, [
-                el("button", {"class": "ha-skip", text: t("cancel"), onclick: function () {
-                    modal.remove();
-                }})
+                el("button", {"class": "ha-skip", text: t("cancel"), onclick: close})
             ]));
             modal.appendChild(box);
             document.body.appendChild(modal);
-        }).catch(showGlobalError);
+        }).catch(function (e) {
+            pickerOpen = false;
+            showGlobalError(e);
+        });
     }
+
+    /** Kauf-Modus ohne laufende Einlagerung: Lagerort waehlen lassen, damit das MHD abgefragt wird */
+    window.haStorageEnsureSession = function () {
+        if (pickerOpen || starting || (state && state.session)) return;
+        openPicker();
+    };
+
+    // ------------------------------------------------------------------ Produkt bearbeiten
+
+    /**
+     * Lagerort und Mengeneinheit eines Produkts aendern (z.B. direkt nach der automatischen Anlage).
+     * @param {number} [productId] ohne Angabe: Produkt des letzten Einkaufs
+     * @param {function} [onDone] wird nach dem Speichern aufgerufen
+     */
+    window.haStorageEditProduct = function (productId, onDone) {
+        request("GET", "product", undefined, productId ? {product: productId} : null).then(function (data) {
+            var location = data.location_id, unit = data.qu_id, factor = 1;
+            var modal = el("div", {"class": "ha-modal", style: "z-index:30"});
+            var error = el("div", {"class": "ha-error"});
+            var oldUnitName = (data.units.filter(function (u) { return u.id === data.qu_id; })[0] || {}).name || "";
+
+            function choices(list, current, onPick) {
+                var wrap = el("div", {"class": "ha-choices"});
+                list.forEach(function (entry) {
+                    var b = el("button", {"class": entry.id === current ? "ha-sel" : "", text: entry.name, onclick: function () {
+                        Array.prototype.forEach.call(wrap.children, function (c) { c.classList.remove("ha-sel"); });
+                        b.classList.add("ha-sel");
+                        onPick(entry.id, entry.name);
+                    }});
+                    wrap.appendChild(b);
+                });
+                return wrap;
+            }
+
+            var factorValue = el("span", {"class": "ha-factor-val", text: "1"});
+            var factorUnit = el("span", {});
+            function setFactor(v) {
+                factor = Math.max(0.001, Math.round(v * 1000) / 1000);
+                factorValue.textContent = String(factor).replace(".", lang === "de" ? "," : ".");
+            }
+            var quick = el("div", {"class": "ha-choices", style: "margin-top:10px"});
+            [1, 2, 4, 6, 10, 12, 100, 250, 500, 1000].forEach(function (v) {
+                quick.appendChild(el("button", {text: String(v), onclick: function () { setFactor(v); }}));
+            });
+            var factorBox = el("div", {"class": "ha-factor"}, [
+                el("div", {"class": "ha-factor-row"}, [
+                    el("span", {text: t("editFactor").replace("%old%", oldUnitName)}),
+                    el("button", {text: "−", "aria-label": "−", onclick: function () { setFactor(factor - 1); }}),
+                    factorValue,
+                    el("button", {text: "+", "aria-label": "+", onclick: function () { setFactor(factor + 1); }}),
+                    factorUnit
+                ]),
+                quick,
+                el("div", {"class": "ha-hint", style: "margin-top:8px", text: t("editFactorHint")})
+            ]);
+
+            var save = el("button", {"class": "ha-save", text: t("save"), onclick: function () {
+                error.textContent = "";
+                request("POST", "product", {
+                    product_id: data.product_id, location_id: location, qu_id: unit, factor: unit !== data.qu_id ? factor : null
+                }).then(function () {
+                    modal.remove();
+                    if (typeof onDone === "function") onDone();
+                }).catch(function (e) {
+                    error.textContent = t("error") + ": " + e.message;
+                });
+            }});
+
+            var box = el("div", {"class": "ha-box ha-edit"}, [
+                el("h2", {text: t("editProduct")}),
+                el("div", {"class": "ha-name", text: data.name}),
+                el("h3", {text: t("editLocation")}),
+                choices(data.locations, data.location_id, function (id) { location = id; }),
+                el("h3", {text: t("editUnit")}),
+                choices(data.units, data.qu_id, function (id, name) {
+                    unit = id;
+                    factorUnit.textContent = name;
+                    factorBox.classList.toggle("ha-on", id !== data.qu_id);
+                }),
+                factorBox,
+                el("div", {"class": "ha-actions"}, [save, el("button", {"class": "ha-skip", text: t("cancel"), onclick: function () {
+                    modal.remove();
+                }})]),
+                error
+            ]);
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+        }).catch(showGlobalError);
+    };
 
     // ------------------------------------------------------------------ MHD-Dialog
 
@@ -520,7 +663,10 @@
             el("h2", {text: t("bbTitle")}),
             item.has_picture ? el("img", {"class": "ha-pic", alt: "", src: API + "?action=picture&product=" + item.product_id}) : null,
             el("div", {"class": "ha-name", text: item.name}),
-            el("div", {"class": "ha-sub", text: (state.session ? state.session.location_name : "") + amount}),
+            el("div", {"class": "ha-sub", text: (state.session ? locationLabel(state.session) : "") + amount}),
+            el("button", {"class": "ha-edit-link", text: t("editProduct"), onclick: function () {
+                window.haStorageEditProduct(item.product_id);
+            }}),
             el("div", {"class": "ha-entry"}, [
                 el("div", {}, [display, preview, keys]),
                 el("div", {}, [
