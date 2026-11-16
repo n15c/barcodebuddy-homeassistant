@@ -167,13 +167,14 @@
     // ------------------------------------------------------------------ Styles
 
     var css = "" +
-        "#ha-banner{position:fixed;top:0;left:0;right:0;z-index:5;background:#2e7d32;color:#fff;font:bold 1.4em arial;" +
+        "#ha-banner{background:#16a34a;color:#fff;font-weight:bold;font-size:1.3em;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;" +
         "padding:10px 16px;display:none;align-items:center;justify-content:space-between;gap:12px}" +
-        "#ha-banner button{font:bold 0.9em arial;padding:8px 16px;border:0;border-radius:4px;background:#fff;color:#2e7d32}" +
+        "#ha-banner.ha-fixed{position:fixed;top:0;left:0;right:0;z-index:5}" +
+        "#ha-banner button{font:inherit;font-size:.85em;padding:10px 20px;min-height:48px;border:0;border-radius:12px;background:#fff;color:#166534}" +
         ".ha-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:20;background:rgba(0,0,0,.85);display:flex;align-items:center;" +
         "justify-content:center;padding:16px;box-sizing:border-box}" +
         ".ha-box{background:#fff;border-radius:8px;padding:20px;width:100%;max-width:640px;max-height:100%;overflow:auto;" +
-        "box-sizing:border-box;font-family:arial;text-align:center}" +
+        "box-sizing:border-box;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;text-align:center;color:#111827}" +
         ".ha-box h2{margin:0 0 6px;font-size:1.3em;color:#555}" +
         ".ha-name{font-size:1.9em;font-weight:bold;margin:4px 0}" +
         ".ha-sub{color:#666;margin-bottom:10px}" +
@@ -183,7 +184,7 @@
         ".ha-preview.ha-bad{color:#c62828}" +
         ".ha-hint{color:#888;font-size:.9em;margin-bottom:10px}" +
         ".ha-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}" +
-        ".ha-grid button,.ha-actions button,.ha-loc{font:bold 1.1em arial;padding:14px 16px;border:0;border-radius:6px;" +
+        ".ha-grid button,.ha-actions button,.ha-loc{font:inherit;font-weight:bold;font-size:1.1em;padding:14px 16px;min-height:56px;border:0;border-radius:12px;" +
         "background:#e3f2fd;color:#0d47a1;flex:1 1 28%;min-width:120px}" +
         ".ha-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}" +
         ".ha-actions .ha-save{background:#2e7d32;color:#fff;flex:1 1 100%;font-size:1.4em}" +
@@ -192,7 +193,11 @@
         ".ha-loc{display:block;width:100%;margin:8px 0;font-size:1.5em}" +
         ".ha-cal{font-size:1.1em;padding:6px;margin-top:4px}" +
         ".ha-more{margin-top:10px;color:#666}" +
-        ".ha-error{color:#c62828;margin-top:8px;min-height:1.2em}";
+        ".ha-error{color:#c62828;margin-top:8px;min-height:1.2em}" +
+        ".ha-box{border-radius:20px}.ha-input{border-radius:12px}" +
+        "@media (prefers-color-scheme: dark){.ha-box{background:#111827;color:#f3f4f6}.ha-box h2,.ha-sub,.ha-hint,.ha-more{color:#9ca3af}" +
+        ".ha-input,.ha-cal{background:#1f2937;color:#f3f4f6}.ha-grid button,.ha-loc{background:#1e3a8a;color:#dbeafe}" +
+        ".ha-actions .ha-skip{background:#374151;color:#f3f4f6}.ha-actions .ha-never{background:#7c2d12;color:#fed7aa}}";
 
     // ------------------------------------------------------------------ Banner
 
@@ -211,7 +216,8 @@
         banner.appendChild(el("span", {text: "📦 " + t("storing") + ": " + session.location_name + open}));
         banner.appendChild(el("button", {text: t("stop"), onclick: stopSession}));
         banner.style.display = "flex";
-        document.body.style.paddingTop = banner.offsetHeight + "px";
+        if (banner.classList.contains("ha-fixed"))
+            document.body.style.paddingTop = banner.offsetHeight + "px";
     }
 
     function stopSession() {
@@ -390,12 +396,16 @@
         var style = document.createElement("style");
         style.textContent = css;
         document.head.appendChild(style);
-        banner = el("div", {id: "ha-banner"});
-        document.body.appendChild(banner);
+        // Seiten koennen einen Platz fuer den Balken vorgeben, sonst wird er oben fixiert
+        banner = document.getElementById("ha-banner");
+        if (!banner) {
+            banner = el("div", {id: "ha-banner", "class": "ha-fixed"});
+            document.body.appendChild(banner);
+        }
 
         var entry = document.getElementById("ha-storage-menu");
         refresh().then(function () {
-            if (entry) entry.textContent = t("menu");
+            if (entry && !entry.children.length) entry.textContent = t("menu");
         });
         setInterval(function () {
             if (!document.hidden) refresh();

@@ -62,10 +62,23 @@ Hinweis: Die Energie wird pro Packung eingetragen, weil Grocy sie pro Bestandsme
 Wer als Mengeneinheit z.B. Gramm verwendet, sollte den Wert in Grocy anpassen. Die Daten von
 Open Food Facts stehen unter der [ODbL-Lizenz](https://opendatacommons.org/licenses/odbl/1-0/).
 
+### Screen-Seite für Touchscreens
+
+Die Screen-Seite (in BarcodeBuddy oben „Screen“) ist für Tablets und Smartphones neu gestaltet:
+
+- Große Kacheln für alle Modi (Kaufen, Verbrauchen, Öffnen, Bestand, Einkaufsliste, Verdorben, Alles verbrauchen)
+  statt eines versteckten Menüs; der aktive Modus ist farbig markiert und steht oben in der Leiste
+- Ergebniskarte mit Aktion, großem Produktnamen und Details (z.B. „Eingekauft – Milch – 1 Packung · Bestand: 3“),
+  farbig nach Ergebnis; nach 4 Sekunden wieder „Bereit zum Scannen“
+- Verlauf der letzten Scans mit Uhrzeit
+- Mengen-Tastatur statt Browser-Eingabefenster
+- Ton und „Bildschirm wach halten“ per Taste, Vollbild-Taste, Verbindungsanzeige
+- Hell- und Dunkelmodus nach Systemeinstellung, Texte auf Deutsch oder Englisch (Option `product_language`)
+- Hochformat, Querformat und Smartphone; im Querformat passt alles ohne Scrollen auf den Bildschirm
+
 ### Einlagern mit Abfrage des Mindesthaltbarkeitsdatums
 
-Auf der Screen-Seite (in BarcodeBuddy oben „Screen“) gibt es im Modus-Menü (Einkaufswagen-Taste)
-den Punkt **„Einlagern …“**:
+Auf der Screen-Seite gibt es die grüne Taste **„Einlagern …“**:
 
 1. Lagerort wählen, z.B. „Kühlschrank“. BarcodeBuddy wechselt in den Kauf-Modus, oben erscheint ein grüner Balken.
 2. Alle Produkte scannen. Jedes wird in Grocy **an diesem Lagerort** eingebucht. Neue Produkte, die automatisch
