@@ -24,6 +24,12 @@ class HaAutoCreate {
     const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
     const MAX_NAME_LEN   = 150;
 
+    /** Fehlgeschlagene Produktbilder werden im Hintergrund (cron.php, alle 2 Minuten) nachgeladen */
+    public static $pictureQueueFile = __DIR__ . "/../data/ha_pictures.json";
+    /** Wartezeit in Minuten vor dem 1., 2., ... Nachlade-Versuch */
+    const PICTURE_RETRY_MINUTES = array(2, 10, 30, 120, 360, 1440);
+    const PICTURE_QUEUE_MAX     = 100;
+
     private static $options = null;
 
     /**
@@ -124,7 +130,7 @@ class HaAutoCreate {
         $lang   = self::language();
         $fields = array("code", "product_name", "product_name_$lang", "generic_name", "generic_name_$lang",
             "brands", "quantity", "product_quantity", "product_quantity_unit", "serving_size",
-            "image_front_url", "image_url", "ingredients_text", "ingredients_text_$lang",
+            "image_front_url", "image_url", "image_front_small_url", "ingredients_text", "ingredients_text_$lang",
             "allergens_tags", "traces_tags", "nutriscore_grade", "nova_group", "nutriments",
             "categories", "categories_tags");
 
@@ -280,14 +286,19 @@ class HaAutoCreate {
             throw $e;
         }
 
-        // Bild ist optional: Fehler hier verhindern das Anlegen nicht
-        try {
-            $fileName = self::uploadPicture($barcode, $off);
-            if ($fileName !== null)
-                self::grocyRequest("PUT", "objects/products/" . $productId, array("picture_file_name" => $fileName));
-        } catch (Throwable $e) {
-            $log = new LogOutput("Produktbild konnte nicht übernommen werden: " . $e->getMessage(), EVENT_TYPE_ERROR, $barcode);
-            $log->dontSendWebsocket()->createLog();
+        // Bild ist optional: Beim Scan nur ein kurzer Versuch, damit der Scan nicht lange haengt.
+        // Ist der Bildserver gerade nicht erreichbar, wird das Bild im Hintergrund nachgeladen.
+        $pictureUrls = self::pictureUrls($off);
+        if (count($pictureUrls) > 0) {
+            try {
+                $fileName = self::fetchAndUploadPicture($barcode, array_slice($pictureUrls, 0, 1),
+                    array(CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_TIMEOUT => 20));
+                if ($fileName !== null)
+                    self::grocyRequest("PUT", "objects/products/" . $productId, array("picture_file_name" => $fileName));
+            } catch (Throwable $e) {
+                self::queuePicture($productId, $name, $barcode, $pictureUrls);
+                self::log("Produktbild wird im Hintergrund nachgeladen (" . $e->getMessage() . ")", $barcode);
+            }
         }
 
         return array(
@@ -366,21 +377,162 @@ class HaAutoCreate {
         return null;
     }
 
-    private static function uploadPicture(string $barcode, array $off): ?string {
-        $url = $off["image_front_url"] ?? ($off["image_url"] ?? null);
-        if (!is_string($url) || !preg_match(self::$imageUrlPattern, $url))
-            return null;
-        list($status, $data) = self::http("GET", $url, null, array(), false);
-        if ($status != 200 || $data === "" || strlen($data) > self::MAX_IMAGE_SIZE)
-            return null;
-        $info = @getimagesizefromstring($data);
-        $extensions = array("image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp", "image/gif" => "gif");
-        if ($info === false || !isset($extensions[$info["mime"]]))
-            return null;
+    /** Bild-Adressen in der bevorzugten Reihenfolge, nur von Open-Food-Facts-Servern */
+    private static function pictureUrls(array $off): array {
+        $urls = array();
+        foreach (array("image_front_url", "image_url", "image_front_small_url") as $field) {
+            $url = $off[$field] ?? null;
+            if (is_string($url) && preg_match(self::$imageUrlPattern, $url) && !in_array($url, $urls, true))
+                $urls[] = $url;
+        }
+        return $urls;
+    }
 
-        $fileName = "bbuddy_" . $barcode . "_" . time() . "." . $extensions[$info["mime"]];
-        self::grocyRequest("PUT", "files/productpictures/" . base64_encode($fileName), $data, "application/octet-stream");
-        return $fileName;
+    /**
+     * Laedt das erste erreichbare Bild und speichert es in Grocy.
+     * @return string|null Dateiname in Grocy, null wenn keine Adresse ein gueltiges Bild lieferte
+     * @throws RuntimeException wenn kein Bildserver erreichbar war oder Grocy das Bild nicht annahm
+     */
+    private static function fetchAndUploadPicture(string $barcode, array $urls, array $curlOptions): ?string {
+        $extensions = array("image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp", "image/gif" => "gif");
+        $lastError  = null;
+        foreach ($urls as $url) {
+            try {
+                list($status, $data) = self::http("GET", $url, null, array(), false, $curlOptions);
+            } catch (RuntimeException $e) {
+                $lastError = $e;
+                continue;
+            }
+            if ($status != 200 || $data === "" || strlen($data) > self::MAX_IMAGE_SIZE) {
+                $lastError = new RuntimeException(parse_url($url, PHP_URL_HOST) . " antwortete mit HTTP $status");
+                continue;
+            }
+            $info = @getimagesizefromstring($data);
+            if ($info === false || !isset($extensions[$info["mime"]]))
+                continue;
+
+            $fileName = "bbuddy_" . $barcode . "_" . time() . "." . $extensions[$info["mime"]];
+            self::grocyRequest("PUT", "files/productpictures/" . base64_encode($fileName), $data, "application/octet-stream");
+            return $fileName;
+        }
+        if ($lastError !== null)
+            throw $lastError;
+        return null;
+    }
+
+    // ---------------------------------------------------------------- Bilder nachladen
+
+    private static function log(string $text, ?string $barcode = null): void {
+        DatabaseConnection::getInstance()->saveLog($text . ($barcode !== null ? " [$barcode]" : ""));
+    }
+
+    /** Fuehrt $fn mit der Warteschlange unter kurzer exklusiver Dateisperre aus */
+    private static function withPictureQueue(callable $fn) {
+        $handle = @fopen(self::$pictureQueueFile, "c+");
+        if ($handle === false)
+            throw new RuntimeException("Warteschlange " . self::$pictureQueueFile . " ist nicht beschreibbar");
+        try {
+            flock($handle, LOCK_EX);
+            $queue = json_decode((string)stream_get_contents($handle), true);
+            if (!is_array($queue))
+                $queue = array();
+            $result = $fn($queue);
+            ftruncate($handle, 0);
+            rewind($handle);
+            fwrite($handle, json_encode(array_values($queue), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
+            fflush($handle);
+            return $result;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    private static function queuePicture(int $productId, string $name, string $barcode, array $urls): void {
+        try {
+            self::withPictureQueue(function (array &$queue) use ($productId, $name, $barcode, $urls) {
+                $queue[] = array(
+                    "product_id" => $productId,
+                    "name"       => $name,
+                    "barcode"    => $barcode,
+                    "urls"       => $urls,
+                    "attempts"   => 0,
+                    "next_try"   => time() + self::PICTURE_RETRY_MINUTES[0] * 60,
+                );
+                if (count($queue) > self::PICTURE_QUEUE_MAX)
+                    $queue = array_slice($queue, -self::PICTURE_QUEUE_MAX);
+            });
+        } catch (Throwable $e) {
+            self::log("Produktbild kann nicht vorgemerkt werden: " . $e->getMessage(), $barcode);
+        }
+    }
+
+    /**
+     * Wird von cron.php aufgerufen: laedt faellige Produktbilder nach. Laeuft schon ein
+     * Durchgang (cron.php wird auch von der Screen-Seite aufgerufen), passiert nichts.
+     */
+    public static function retryPendingPictures(): void {
+        if (!file_exists(self::$pictureQueueFile))
+            return;
+        $runLock = @fopen(self::$pictureQueueFile . ".lock", "c");
+        if ($runLock === false || !flock($runLock, LOCK_EX | LOCK_NB))
+            return;
+        try {
+            $due = self::withPictureQueue(function (array &$queue) {
+                $now = time();
+                return array_values(array_filter($queue, function ($item) use ($now) {
+                    return (int)$item["next_try"] <= $now;
+                }));
+            });
+            foreach ($due as $item)
+                self::retryPicture($item);
+        } finally {
+            flock($runLock, LOCK_UN);
+            fclose($runLock);
+        }
+    }
+
+    private static function retryPicture(array $item): void {
+        $productId = (int)$item["product_id"];
+        $attempt   = (int)$item["attempts"] + 1;
+        $done      = false;
+        $error     = null;
+        try {
+            $product = self::grocyRequest("GET", "objects/products/" . $productId);
+            if (!is_array($product) || !empty($product["picture_file_name"])) {
+                $done = true; // Produkt geloescht oder hat inzwischen ein Bild
+            } else {
+                // Laengere Wartezeiten, alle Bildvarianten, jeder zweite Versuch nur ueber IPv4
+                $options = array(CURLOPT_CONNECTTIMEOUT => 15, CURLOPT_TIMEOUT => 45);
+                if ($attempt % 2 == 1)
+                    $options[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+                $fileName = self::fetchAndUploadPicture((string)$item["barcode"], $item["urls"], $options);
+                if ($fileName !== null) {
+                    self::grocyRequest("PUT", "objects/products/" . $productId, array("picture_file_name" => $fileName));
+                    self::log("Produktbild für " . $item["name"] . " nachgeladen", (string)$item["barcode"]);
+                }
+                $done = true;
+            }
+        } catch (Throwable $e) {
+            $error = $e->getMessage();
+        }
+
+        $giveUp = !$done && $attempt >= count(self::PICTURE_RETRY_MINUTES);
+        if ($giveUp)
+            self::log("Produktbild für " . $item["name"] . " konnte nicht geladen werden (" . $error . "). Es kann in Grocy von Hand hinzugefügt werden.", (string)$item["barcode"]);
+
+        self::withPictureQueue(function (array &$queue) use ($item, $attempt, $done, $giveUp) {
+            foreach ($queue as $index => $entry) {
+                if ((int)$entry["product_id"] !== (int)$item["product_id"])
+                    continue;
+                if ($done || $giveUp) {
+                    unset($queue[$index]);
+                } else {
+                    $queue[$index]["attempts"] = $attempt;
+                    $queue[$index]["next_try"] = time() + self::PICTURE_RETRY_MINUTES[$attempt] * 60;
+                }
+            }
+        });
     }
 
     // ---------------------------------------------------------------- Beschreibung
@@ -537,7 +689,7 @@ class HaAutoCreate {
     /**
      * @return array [HTTP-Status, Antwort]
      */
-    public static function http(string $method, string $url, ?string $body, array $headers, bool $isGrocy): array {
+    public static function http(string $method, string $url, ?string $body, array $headers, bool $isGrocy, array $curlOptions = array()): array {
         global $CONFIG;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -560,11 +712,14 @@ class HaAutoCreate {
         if ($body !== null)
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        if (count($curlOptions) > 0)
+            curl_setopt_array($ch, $curlOptions);
         $response = curl_exec($ch);
         if ($response === false) {
             $error = curl_error($ch);
             curl_close($ch);
-            throw new RuntimeException(($isGrocy ? "Grocy" : "Open Food Facts") . " nicht erreichbar: " . $error);
+            $target = $isGrocy ? "Grocy" : (string)parse_url($url, PHP_URL_HOST);
+            throw new RuntimeException($target . " nicht erreichbar: " . $error);
         }
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);

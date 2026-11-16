@@ -54,6 +54,11 @@ gelten die Grocy-Voreinstellungen für neue Produkte (*Grocy → Einstellungen �
 erste Eintrag. Beides lässt sich später pro Produkt in Grocy ändern; das BarcodeBuddy-Protokoll nennt
 bei jedem angelegten Produkt die verwendeten Werte.
 
+Ist der Bildserver von Open Food Facts beim Scan nicht erreichbar, wird das Produkt trotzdem angelegt und das
+Bild im Hintergrund nachgeladen (nach 2 min, 10 min, 30 min, 2 h, 6 h und 24 h). Das Protokoll meldet, wenn
+das Bild nachgeladen wurde oder endgültig nicht geladen werden konnte. Hat das Produkt inzwischen ein Bild,
+wird es nicht überschrieben.
+
 Findet Open Food Facts nichts oder schlägt das Anlegen fehl, landet der Barcode wie bisher in der Liste
 der unbekannten Barcodes. Barcodes, die dort schon stehen, werden nicht automatisch angelegt.
 Abschalten lässt sich die Funktion mit `auto_create_products: false`.
@@ -83,10 +88,18 @@ Auf der Screen-Seite gibt es die grüne Taste **„Einlagern …“**:
 1. Lagerort wählen, z.B. „Kühlschrank“. BarcodeBuddy wechselt in den Kauf-Modus, oben erscheint ein grüner Balken.
 2. Alle Produkte scannen. Jedes wird in Grocy **an diesem Lagerort** eingebucht. Neue Produkte, die automatisch
    aus Open Food Facts angelegt werden, bekommen ihn auch als Standard-Lagerort.
-3. Nach jedem Scan fragt ein Dialog das **Mindesthaltbarkeitsdatum** ab:
-   - Eingabe über die Zifferntastatur: `151226` oder `15.12.26` → 15.12.2026, `1226` oder `12/26` → 31.12.2026 (Monatsende)
-   - Schnelltasten (+3 Tage, +1 Woche, … +1 Jahr), „Wie zuletzt“, Kalender
-   - „Läuft nicht ab“ oder „Überspringen“ (behält das Standard-Datum des Produkts)
+3. Nach jedem Scan fragt ein Dialog das **Mindesthaltbarkeitsdatum** ab. Das aufgedruckte Datum wird über die
+   eigene Zifferntastatur im Dialog eingetippt (eine angeschlossene Tastatur geht auch), die Vorschau zeigt sofort,
+   was erkannt wurde:
+
+   | Aufdruck | Eingabe (Beispiele) | Ergebnis |
+   |---|---|---|
+   | Tag, Monat, Jahr | `15.12.26`, `15.12.2026`, `151226`, `15122026` | 15.12.2026 |
+   | Nur Monat und Jahr | `02.26`, `02.2026`, `0226`, `022026` | 01.02.2026 (erster Tag des Monats) |
+   | Tag und Monat ohne Jahr | `15.12`, `1512` | 15.12. des nächsten passenden Jahres |
+
+   Dazu kommen Schnelltasten (+3 Tage … +1 Jahr, „Wie zuletzt“), „Läuft nicht ab“ und „Überspringen“
+   (behält das Standard-Datum des Produkts). Liegt das Datum in der Vergangenheit, weist die Vorschau darauf hin.
 
    Werden mehrere Produkte schnell hintereinander gescannt, kommen die Abfragen nacheinander.
 4. Mit „Beenden“ im grünen Balken ist wieder alles wie vorher. Nach zwei Stunden ohne Scan endet die Einlagerung
