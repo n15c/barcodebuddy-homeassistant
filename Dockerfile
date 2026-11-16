@@ -19,13 +19,17 @@ LABEL \
 COPY rootfs /
 RUN chmod +x /usr/local/bin/ha-entrypoint.sh /usr/local/share/ha-grabInput.sh
 
-# Erweiterung: unbekannte Produkte automatisch aus Open Food Facts in Grocy anlegen
+# Erweiterungen: unbekannte Produkte automatisch aus Open Food Facts in Grocy anlegen,
+# Einlagerungsmodus mit MHD-Abfrage auf der Screen-Seite
 COPY bbuddy/ /app/bbuddy/
 COPY build/patch-bbuddy.php /tmp/patch-bbuddy.php
 RUN [ -x /usr/bin/php ] || ln -s /usr/bin/php8 /usr/bin/php; \
     php /tmp/patch-bbuddy.php \
  && php -l /app/bbuddy/incl/processing.inc.php \
+ && php -l /app/bbuddy/incl/api.inc.php \
  && php -l /app/bbuddy/incl/haAutoCreate.inc.php \
+ && php -l /app/bbuddy/incl/haStorage.inc.php \
+ && php -l /app/bbuddy/ha_storage.php \
  && rm /tmp/patch-bbuddy.php
 ENTRYPOINT ["/usr/local/bin/ha-entrypoint.sh"]
 CMD []

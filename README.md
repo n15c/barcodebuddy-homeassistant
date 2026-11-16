@@ -62,6 +62,26 @@ Hinweis: Die Energie wird pro Packung eingetragen, weil Grocy sie pro Bestandsme
 Wer als Mengeneinheit z.B. Gramm verwendet, sollte den Wert in Grocy anpassen. Die Daten von
 Open Food Facts stehen unter der [ODbL-Lizenz](https://opendatacommons.org/licenses/odbl/1-0/).
 
+### Einlagern mit Abfrage des Mindesthaltbarkeitsdatums
+
+Auf der Screen-Seite (in BarcodeBuddy oben „Screen“) gibt es im Modus-Menü (Einkaufswagen-Taste)
+den Punkt **„Einlagern …“**:
+
+1. Lagerort wählen, z.B. „Kühlschrank“. BarcodeBuddy wechselt in den Kauf-Modus, oben erscheint ein grüner Balken.
+2. Alle Produkte scannen. Jedes wird in Grocy **an diesem Lagerort** eingebucht. Neue Produkte, die automatisch
+   aus Open Food Facts angelegt werden, bekommen ihn auch als Standard-Lagerort.
+3. Nach jedem Scan fragt ein Dialog das **Mindesthaltbarkeitsdatum** ab:
+   - Eingabe über die Zifferntastatur: `151226` oder `15.12.26` → 15.12.2026, `1226` oder `12/26` → 31.12.2026 (Monatsende)
+   - Schnelltasten (+3 Tage, +1 Woche, … +1 Jahr), „Wie zuletzt“, Kalender
+   - „Läuft nicht ab“ oder „Überspringen“ (behält das Standard-Datum des Produkts)
+
+   Werden mehrere Produkte schnell hintereinander gescannt, kommen die Abfragen nacheinander.
+4. Mit „Beenden“ im grünen Balken ist wieder alles wie vorher. Nach zwei Stunden ohne Scan endet die Einlagerung
+   von selbst, damit spätere Einkäufe nicht versehentlich im Kühlschrank landen.
+
+Die Scans können vom am Home-Assistant-Host angeschlossenen Scanner, von Scanner-Apps über die API oder aus
+der BarcodeBuddy-Oberfläche kommen; die Abfrage erscheint auf jeder geöffneten Screen-Seite.
+
 ### Barcodescanner / Tastatur anbinden
 
 In der Add-on-Konfiguration:

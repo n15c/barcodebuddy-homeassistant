@@ -69,8 +69,19 @@ class HaAutoCreate {
 
     // ---------------------------------------------------------------- Optionen
 
+    /** Nur fuer Tests: Pfade/Adressen per Umgebungsvariable umlenken (php-fpm reicht keine Umgebung durch) */
+    private static function applyTestOverrides(): void {
+        if (getenv("BBUDDY_HA_OPTIONS_FILE"))
+            self::$optionsFile = getenv("BBUDDY_HA_OPTIONS_FILE");
+        if (getenv("BBUDDY_HA_OFF_URL"))
+            self::$offBaseUrl = getenv("BBUDDY_HA_OFF_URL");
+        if (getenv("BBUDDY_HA_IMAGE_PATTERN"))
+            self::$imageUrlPattern = getenv("BBUDDY_HA_IMAGE_PATTERN");
+    }
+
     private static function options(): array {
         if (self::$options === null) {
+            self::applyTestOverrides();
             self::$options = array();
             $raw = @file_get_contents(self::$optionsFile);
             if ($raw !== false) {
@@ -91,7 +102,7 @@ class HaAutoCreate {
         return self::option("auto_create_products", false) === true;
     }
 
-    private static function language(): string {
+    public static function language(): string {
         $lang = strtolower((string)self::option("product_language", "de"));
         return preg_match('/^[a-z]{2}$/', $lang) ? $lang : "de";
     }
@@ -203,7 +214,17 @@ class HaAutoCreate {
         $groups    = self::grocyGet("objects/product_groups");
         $products  = self::grocyGet("objects/products");
 
-        $location = self::pickEntity($locations, self::option("auto_create_location"), $settings["product_presets_location_id"] ?? -1, "Lagerort");
+        $location = null;
+        require_once __DIR__ . "/haStorage.inc.php";
+        if (($session = HaStorage::activeSession()) !== null) {
+            // Laufende Einlagerung: deren Lagerort auch als Standard-Lagerort des Produkts nehmen
+            foreach ($locations as $entity) {
+                if ((int)$entity["id"] === (int)$session["location_id"])
+                    $location = $entity;
+            }
+        }
+        if ($location === null)
+            $location = self::pickEntity($locations, self::option("auto_create_location"), $settings["product_presets_location_id"] ?? -1, "Lagerort");
         $qu       = self::pickEntity($qus, self::option("auto_create_quantity_unit"), $settings["product_presets_qu_id"] ?? -1, "Mengeneinheit");
         if ($location === null)
             throw new RuntimeException("In Grocy ist kein Lagerort vorhanden");
@@ -487,7 +508,7 @@ class HaAutoCreate {
 
     // ---------------------------------------------------------------- HTTP
 
-    private static function grocyGet(string $path): array {
+    public static function grocyGet(string $path): array {
         $result = self::grocyRequest("GET", $path);
         return is_array($result) ? $result : array();
     }
@@ -496,7 +517,7 @@ class HaAutoCreate {
      * @param array|string|null $body Array wird als JSON gesendet, String unveraendert
      * @return mixed Dekodierte JSON-Antwort
      */
-    private static function grocyRequest(string $method, string $path, $body = null, string $contentType = "application/json") {
+    public static function grocyRequest(string $method, string $path, $body = null, string $contentType = "application/json") {
         $config  = BBConfig::getInstance();
         $headers = array("GROCY-API-KEY: " . $config["GROCY_API_KEY"], "Accept: application/json");
         if ($body !== null) {
@@ -516,7 +537,7 @@ class HaAutoCreate {
     /**
      * @return array [HTTP-Status, Antwort]
      */
-    private static function http(string $method, string $url, ?string $body, array $headers, bool $isGrocy): array {
+    public static function http(string $method, string $url, ?string $body, array $headers, bool $isGrocy): array {
         global $CONFIG;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
