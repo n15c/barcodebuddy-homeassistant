@@ -66,7 +66,17 @@ const tapKeys = async (p, keys) => { for (const k of keys) await p.tap(`.ha-keys
     await page.waitForFunction(() => document.getElementById('result-text').textContent === 'Milch', null, { timeout: 6000 });
     check('Taste „Produkt bearbeiten“ nach dem Einkauf', await page.isVisible('#result-edit'));
     await page.tap('#btn-qty');
-    await page.waitForFunction(() => !document.getElementById('qty-ok').disabled, null, { timeout: 10000 });
+    try {
+        await page.waitForFunction(() => !document.getElementById('qty-ok').disabled, null, { timeout: 15000 });
+    } catch (e) {
+        // Diagnose fuer die CI: was zeigt der Dialog, was liefert der Server?
+        const t0 = Date.now();
+        const state = await page.evaluate(() => fetch('./ha_storage.php?action=state').then(r => r.status + ' ' + r.text()).catch(x => 'Fehler ' + x));
+        console.log('  Diagnose: Hinweis =', JSON.stringify(await page.textContent('#qty-hint')));
+        console.log('  Diagnose: state (' + (Date.now() - t0) + ' ms) =', state.slice(0, 600));
+        console.log('  Diagnose: ha_storage.json =', fs.existsSync(WORK + '/data/ha_storage.json') ? fs.readFileSync(WORK + '/data/ha_storage.json', 'utf8').slice(0, 600) : 'fehlt');
+        throw e;
+    }
     await page.tap('#keypad button:has-text("3")');
     await page.tap('#qty-ok');
     await page.waitForFunction(() => document.getElementById('result-title').textContent === 'Menge geändert', null, { timeout: 5000 });

@@ -32,7 +32,7 @@ JSON
 touch "$WORK/delay_4001234567890"
 
 php -S 127.0.0.1:9385 "$ROOT/test/mock/grocy.php" > "$WORK/mock.log" 2>&1 & PIDS+=($!)
-(cd "$WORK/app" && PHP_CLI_SERVER_WORKERS=6 exec php -S 127.0.0.1:9386) > "$WORK/bb.log" 2>&1 & PIDS+=($!)
+(cd "$WORK/app" && PHP_CLI_SERVER_WORKERS="${BB_WORKERS:-16}" exec php -S 127.0.0.1:9386) > "$WORK/bb.log" 2>&1 & PIDS+=($!)
 (cd "$WORK/app" && exec php wsserver.php) > "$WORK/ws.log" 2>&1 & PIDS+=($!)
 sleep 1.5
 
