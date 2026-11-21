@@ -94,6 +94,8 @@ class LookupProvider {
     }
 
     public static function createReturnArray(?string $name, ?string $alternateBBuddyName = null): ?array {
+        // Home-Assistant-Add-on: HTML-Tags aus gefundenen Namen entfernen
+        $name = cleanProductName($name);
         if ($name == null)
             return null;
         return array("name" => $name, "altNames" => $alternateBBuddyName);

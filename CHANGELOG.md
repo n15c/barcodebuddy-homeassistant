@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.2
+
+- Produktnamen ohne HTML-Tags: Namen aus Open Food Facts und anderen Suchquellen, aus Grocy und in der Liste
+  der unbekannten Barcodes, auf der Screen-Seite und im Protokoll werden ohne `<b>`, `&lt;i&gt;` usw. angezeigt
+
 ## 1.2.1
 
 - Einstellungen: lange Checkbox-Texte überlappen nicht mehr, Untertitel im Dunkelmodus lesbar

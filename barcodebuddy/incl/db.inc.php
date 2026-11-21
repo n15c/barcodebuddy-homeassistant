@@ -320,7 +320,8 @@ class DatabaseConnection {
             $item['id']               = $row['id'];
             $item['barcode']          = $row['barcode'];
             $item['amount']           = $row['amount'];
-            $item['name']             = $row['name'];
+            // Home-Assistant-Add-on: auch schon gespeicherte Namen ohne HTML-Tags anzeigen
+            $item['name']             = function_exists('cleanProductName') ? cleanProductName($row['name']) : $row['name'];
             $item['match']            = $row['possibleMatch'];
             $item['tare']             = $row['requireWeight'];
             $item['bestBeforeInDays'] = $row['bestBeforeInDays'];

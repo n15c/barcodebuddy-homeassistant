@@ -1,6 +1,6 @@
 ---
 name: Barcode Buddy for Grocy
-version: 1.2.1
+version: 1.2.2
 slug: bbuddy-grocy
 description: Barcode scanning for Grocy with Open Food Facts lookup and best-before prompts
 url: https://github.com/n15c/barcodebuddy-homeassistant

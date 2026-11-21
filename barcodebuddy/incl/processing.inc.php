@@ -552,6 +552,32 @@ function printSelections(string $selected, ?array $productinfo): string {
  * @param bool $strongFilter
  * @return string|null
  */
+/**
+ * Home-Assistant-Add-on: Produktnamen ohne HTML. Quellen wie Open Food Facts oder Grocy liefern
+ * Namen teils mit Tags (z.B. "<b>Bio</b> Milch") oder Entities; die wuerden sonst als Text erscheinen.
+ * @return string|null Klartext (nicht maskiert), null wenn leer
+ */
+function plainProductName(?string $name): ?string {
+    if ($name === null)
+        return null;
+    $text = $name;
+    // Mehrfach dekodieren, falls Namen schon maskiert gespeichert wurden (&amp;lt;b&amp;gt; ...)
+    for ($i = 0; $i < 3; $i++) {
+        $decoded = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, "UTF-8");
+        if ($decoded === $text)
+            break;
+        $text = $decoded;
+    }
+    $text = strip_tags(preg_replace('/<br\s*\/?>/i', ' ', $text));
+    $text = trim((string)preg_replace('/[\s\x{00A0}]+/u', ' ', $text));
+    return $text === "" ? null : $text;
+}
+
+/** Produktname ohne HTML, fuer die Ausgabe in HTML maskiert (wie sanitizeString) */
+function cleanProductName(?string $name): ?string {
+    return sanitizeString(plainProductName($name));
+}
+
 function sanitizeString(?string $input, bool $strongFilter = false): ?string {
     if ($input == null)
         return null;

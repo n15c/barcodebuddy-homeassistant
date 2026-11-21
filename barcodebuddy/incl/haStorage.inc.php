@@ -11,6 +11,7 @@
  */
 
 require_once __DIR__ . "/haAutoCreate.inc.php";
+require_once __DIR__ . "/processing.inc.php";
 
 class HaStorage {
 
@@ -167,7 +168,7 @@ class HaStorage {
             $stockIds = array_values(array_unique($stockIds));
 
             $product = HaAutoCreate::grocyRequest("GET", "objects/products/" . $productId);
-            $name    = is_array($product) ? (string)$product["name"] : "#$productId";
+            $name    = is_array($product) ? (string)plainProductName($product["name"]) : "#$productId";
             $last    = array(
                 "product_id" => $productId,
                 "name"       => $name,
@@ -361,7 +362,7 @@ class HaStorage {
         });
         return array(
             "product_id"  => (int)$product["id"],
-            "name"        => (string)$product["name"],
+            "name"        => (string)plainProductName($product["name"]),
             "location_id" => (int)$product["location_id"],
             "qu_id"       => (int)$product["qu_id_stock"],
             "locations"   => self::getLocations(),
@@ -423,7 +424,7 @@ class HaStorage {
 
         if (count($changes) > 0)
             DatabaseConnection::getInstance()->saveLog("Produkt bearbeitet: " . $product["name"] . " (" . implode(", ", $changes) . ")");
-        return array("name" => (string)$product["name"], "changed" => $changes);
+        return array("name" => (string)plainProductName($product["name"]), "changed" => $changes);
     }
 
     // ---------------------------------------------------------------- Produktbild
