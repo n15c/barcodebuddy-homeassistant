@@ -4,6 +4,8 @@
 
 - Produktnamen ohne HTML-Tags: Namen aus Open Food Facts und anderen Suchquellen, aus Grocy und in der Liste
   der unbekannten Barcodes, auf der Screen-Seite und im Protokoll werden ohne `<b>`, `&lt;i&gt;` usw. angezeigt
+- Einmalige Bereinigung nach dem Update: Produktnamen mit HTML-Tags werden auch in Grocy korrigiert. Gäbe es
+  den bereinigten Namen schon, bleibt das Produkt unverändert und steht im Protokoll
 
 ## 1.2.1
 

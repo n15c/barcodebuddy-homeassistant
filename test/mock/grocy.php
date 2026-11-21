@@ -18,6 +18,9 @@ if ($state === null) {
             "enable_tare_weight_handling" => 0, "tare_weight" => 0, "row_created_timestamp" => $now, "picture_file_name" => null),
             // Name mit HTML wie aus manchen Datenquellen
             array("id" => 9, "name" => "<b>Bio</b>-Butter &lt;i&gt;mild&lt;/i&gt;", "location_id" => 2, "qu_id_stock" => 3, "default_best_before_days" => 14,
+            "enable_tare_weight_handling" => 0, "tare_weight" => 0, "row_created_timestamp" => $now, "picture_file_name" => null),
+            // Bereinigt hiesse es wie ein vorhandenes Produkt ("Milch") und bleibt deshalb unveraendert
+            array("id" => 10, "name" => "<b>Milch</b>", "location_id" => 1, "qu_id_stock" => 3, "default_best_before_days" => 7,
             "enable_tare_weight_handling" => 0, "tare_weight" => 0, "row_created_timestamp" => $now, "picture_file_name" => null)),
         "product_barcodes" => array(array("id" => 1, "product_id" => 1, "barcode" => "4000000000001", "amount" => null),
             array("id" => 2, "product_id" => 9, "barcode" => "4000000000009", "amount" => null)),

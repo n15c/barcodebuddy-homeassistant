@@ -66,7 +66,7 @@ check("Barcode gespeichert", in_array("4000417025005", array_column(grocy()["pro
 check("Einkauf gebucht", lastStock() !== null && (int)lastStock()["product_id"] === (int)($p["id"] ?? -1));
 
 scan("4099999999999");
-check("Unbekannt bei Open Food Facts: kein Produkt angelegt", count(grocy()["products"]) === 3);
+check("Unbekannt bei Open Food Facts: kein Produkt angelegt", count(grocy()["products"]) === 4);
 
 echo "-- Bild nachladen\n";
 scan("4008400301020");
@@ -80,6 +80,10 @@ usleep(600000);
 exec("cd " . escapeshellarg($app) . " && php cron.php");
 proc_terminate($imageServer);
 check("Hintergrundjob lädt das Bild nach", !empty(product("Bildtest")["picture_file_name"]));
+$byId = array_column(grocy()["products"], "name", "id");
+check("Grocy-Namen einmalig bereinigt", $byId[9] === "Bio-Butter mild", json_encode($byId[9]));
+check("Namenskonflikt: Produkt bleibt unverändert", $byId[10] === "<b>Milch</b>", json_encode($byId[10]));
+check("Bereinigung läuft nur einmal", file_exists("$work/data/ha_names_cleaned"));
 check("Warteschlange danach leer", (json_decode((string)file_get_contents("$work/data/ha_pictures.json"), true) ?: array()) === array());
 
 echo "-- Einlagern und MHD\n";

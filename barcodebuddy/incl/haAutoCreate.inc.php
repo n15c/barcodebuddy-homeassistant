@@ -489,6 +489,52 @@ class HaAutoCreate {
     }
 
     /**
+     * Einmalige Bereinigung (von cron.php aufgerufen): entfernt HTML-Tags aus Produktnamen in Grocy,
+     * z.B. "<b>Bio</b> Milch" -> "Bio Milch". Gibt es den bereinigten Namen schon, bleibt das Produkt
+     * unveraendert (Grocy erlaubt jeden Namen nur einmal) und wird im Protokoll genannt. Ist Grocy nicht
+     * erreichbar, wird es beim naechsten Lauf erneut versucht.
+     */
+    public static function cleanupProductNamesOnce(): void {
+        $marker = dirname(self::$pictureQueueFile) . "/ha_names_cleaned";
+        if (file_exists($marker))
+            return;
+        require_once __DIR__ . "/processing.inc.php";
+        try {
+            $products = self::grocyGet("objects/products");
+            $taken    = array();
+            foreach ($products as $product)
+                $taken[mb_strtolower((string)$product["name"])] = (int)$product["id"];
+
+            $changed = array();
+            $skipped = array();
+            foreach ($products as $product) {
+                $name  = (string)$product["name"];
+                $clean = plainProductName($name);
+                if ($clean === null || $clean === $name)
+                    continue;
+                $key = mb_strtolower($clean);
+                if (isset($taken[$key]) && $taken[$key] !== (int)$product["id"]) {
+                    $skipped[] = $clean;
+                    continue;
+                }
+                self::grocyRequest("PUT", "objects/products/" . (int)$product["id"], array("name" => $clean));
+                unset($taken[mb_strtolower($name)]);
+                $taken[$key] = (int)$product["id"];
+                $changed[]   = $clean;
+            }
+        } catch (Throwable $e) {
+            self::log("Bereinigung der Produktnamen fehlgeschlagen, wird wiederholt: " . $e->getMessage());
+            return;
+        }
+        RedisConnection::expireAllProductInfo();
+        if (count($changed) > 0)
+            self::log("Produktnamen in Grocy ohne HTML-Tags gespeichert: " . implode(", ", $changed));
+        if (count($skipped) > 0)
+            self::log("Produktnamen nicht bereinigt, weil es den Namen schon gibt: " . implode(", ", $skipped));
+        @file_put_contents($marker, date("c") . "\n");
+    }
+
+    /**
      * Wird von cron.php aufgerufen: laedt faellige Produktbilder nach. Laeuft schon ein
      * Durchgang (cron.php wird auch von der Screen-Seite aufgerufen), passiert nichts.
      */
