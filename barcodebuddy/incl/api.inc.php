@@ -60,7 +60,7 @@ class GrocyProduct {
 
         $result                        = new GrocyProduct();
         $result->id                    = $infoArray["product"]["id"];
-        $result->name                  = sanitizeString($infoArray["product"]["name"]);
+        $result->name                  = cleanProductName($infoArray["product"]["name"]);
         $result->isTare                = ($infoArray["product"]["enable_tare_weight_handling"] == "1");
         $result->tareWeight            = sanitizeString($infoArray["product"]["tare_weight"]);
         $result->defaultBestBeforeDays = $infoArray["product"]["default_best_before_days"];
@@ -84,7 +84,7 @@ class GrocyProduct {
 
         $result                        = new GrocyProduct();
         $result->id                    = $infoArray["id"];
-        $result->name                  = sanitizeString($infoArray["name"]);
+        $result->name                  = cleanProductName($infoArray["name"]);
         $result->isTare                = ($infoArray["enable_tare_weight_handling"] == "1");
         $result->tareWeight            = sanitizeString($infoArray["tare_weight"]);
         $result->quFactor              = 1; //FIXME qu_conversion_factor_purchase_to_stock was removed, might break QU conversion

@@ -66,7 +66,7 @@ check("Barcode gespeichert", in_array("4000417025005", array_column(grocy()["pro
 check("Einkauf gebucht", lastStock() !== null && (int)lastStock()["product_id"] === (int)($p["id"] ?? -1));
 
 scan("4099999999999");
-check("Unbekannt bei Open Food Facts: kein Produkt angelegt", count(grocy()["products"]) === 2);
+check("Unbekannt bei Open Food Facts: kein Produkt angelegt", count(grocy()["products"]) === 4);
 
 echo "-- Bild nachladen\n";
 scan("4008400301020");
@@ -80,6 +80,10 @@ usleep(600000);
 exec("cd " . escapeshellarg($app) . " && php cron.php");
 proc_terminate($imageServer);
 check("Hintergrundjob lädt das Bild nach", !empty(product("Bildtest")["picture_file_name"]));
+$byId = array_column(grocy()["products"], "name", "id");
+check("Grocy-Namen einmalig bereinigt", $byId[9] === "Bio-Butter mild", json_encode($byId[9]));
+check("Namenskonflikt: Produkt bleibt unverändert", $byId[10] === "<b>Milch</b>", json_encode($byId[10]));
+check("Bereinigung läuft nur einmal", file_exists("$work/data/ha_names_cleaned"));
 check("Warteschlange danach leer", (json_decode((string)file_get_contents("$work/data/ha_pictures.json"), true) ?: array()) === array());
 
 echo "-- Einlagern und MHD\n";
@@ -110,6 +114,14 @@ $milk = product("Milch");
 check("Mengeneinheit gewechselt", $status === 200 && (int)$milk["qu_id_stock"] === 5, json_encode($result));
 check("Umrechnung angelegt, Bestand umgerechnet", (float)lastStock()["amount"] === 6000.0);
 check("Standard-Lagerort geändert, letzter Einkauf umgezogen", (int)$milk["location_id"] === 3 && (int)lastStock()["location_id"] === 3);
+echo "-- Produktnamen ohne HTML\n";
+scan("4000000000009");
+list(, $state) = http("GET", "ha_storage.php?action=state");
+check("MHD-Abfrage zeigt Namen ohne Tags", end($state["pending"])["name"] === "Bio-Butter mild", json_encode(end($state["pending"])["name"] ?? null));
+list(, $edit) = http("GET", "ha_storage.php?action=product&product=9");
+check("Produkt bearbeiten zeigt Namen ohne Tags", $edit["name"] === "Bio-Butter mild", json_encode($edit["name"] ?? null));
+$log = shell_exec("cd " . escapeshellarg($app) . " && php -r 'require \"incl/configProcessing.inc.php\"; require \"incl/db.inc.php\"; echo DatabaseConnection::getInstance()->getDatabaseReference()->querySingle(\"SELECT log FROM BarcodeLogs ORDER BY id DESC LIMIT 1\");'");
+check("Protokoll ohne Tags", strpos((string)$log, "Bio-Butter mild") !== false && stripos((string)$log, "&lt;") === false, (string)$log);
 http("POST", "ha_storage.php?action=stop", array());
 
 echo "-- Oberfläche\n";
